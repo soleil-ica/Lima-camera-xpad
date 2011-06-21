@@ -97,6 +97,10 @@ namespace lima
 		vector<uint16_t> getDacl();
 		//- Save and load Dacl
 		void saveAndloadDacl(uint16_t* all_dacls);
+		//- Close the xpix lib
+		void xpixClose();	
+		//- Open the xpix lib
+		void xpixInit();
 
 	protected:
 		virtual void setMaxImageSizeCallbackActive(bool cb_active);	

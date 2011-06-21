@@ -135,18 +135,24 @@ void XpadCamera::start()
 	DEB_TRACE() << "m_acquisition_type = " << m_acquisition_type ;
 
 	if(m_acquisition_type == 0)
+	{
 		 //- Post XPAD_DLL_START_SLOW_MSG msg (aka getOneImage)
 		this->post(new yat::Message(XPAD_DLL_START_SLOW_B2_MSG), kPOST_MSG_TMO);
+	}
 	else if (m_acquisition_type == 1)
+	{
 		//- Post XPAD_DLL_START_FAST_MSG msg (aka getImgSeq)
 		this->post(new yat::Message(XPAD_DLL_START_FAST_MSG), kPOST_MSG_TMO);
+	}
 	else if (m_acquisition_type == 2)
+	{
 		//- Post XPAD_DLL_START_SLOW_MSG_B4 msg (aka getOneImage)
 		this->post(new yat::Message(XPAD_DLL_START_SLOW_B4_MSG), kPOST_MSG_TMO);
+	}
 	else
 	{
 		DEB_ERROR() << "Acquisition type not supported" ;
-		throw LIMA_HW_EXC(Error, "Acquisition type not supported");
+		throw LIMA_HW_EXC(Error, "Acquisition type not supported: possible values are:\n0->SLOW 16 bits\n1->FAST 16 bits\n2->SLOW 32 bits");
 	}
 }
 
@@ -274,8 +280,8 @@ void XpadCamera::setTrigMode(TrigMode mode)
 			m_trigger_type = EXTERN_GATE;
 		break;
 		default:
-			DEB_ERROR() << "Error: Trigger mode unsupported: only INTERN_GATE or EXTERN_GATE" ;
-			throw LIMA_HW_EXC(Error, "Trigger mode unsupported: only INTERN_GATE or EXTERN_GATE");
+			DEB_ERROR() << "Error: Trigger mode unsupported: only INTERN_GATE, EXTERN_TRIG or EXTERN_GATE" ;
+			throw LIMA_HW_EXC(Error, "Trigger mode unsupported: only INTERN_GATE, EXTERN_TRIG or EXTERN_GATE");
 		break;
 	}
 }
@@ -299,8 +305,6 @@ void XpadCamera::getTrigMode(TrigMode& mode)
 			mode = ExtGate;
 		break;
 		default:
-			DEB_ERROR() << "Error: Trigger mode unsupported: only INTERN_GATE or EXTERN_GATE" ;
-			throw LIMA_HW_EXC(Error, "Trigger mode unsupported: only INTERN_GATE or EXTERN_GATE");
 		break;
 	}
     	DEB_RETURN() << DEB_VAR1(mode);
@@ -315,19 +319,32 @@ void XpadCamera::setExpTime(double exp_time_sec)
 	DEB_MEMBER_FUNCT();
 	DEB_PARAM() << DEB_VAR1(exp_time_sec);
 
+	if (exp_time_sec < 0.001)
+	{
+		m_time_unit = MICROSEC_GATE;
+	}
+	else if ((exp_time_sec >= 0.001) && (exp_time_sec <= 32))
+	{
+		m_time_unit = MILLISEC_GATE;
+	}
+	else if (exp_time_sec > 32)
+	{
+		m_time_unit = SECONDS_GATE;		
+	}
+
 	//- 1=MICROSEC_GATE; 2=MILLISEC_GATE; 3=SECONDS_GATE
 	switch(m_time_unit)
 	{
 		case MICROSEC_GATE:
-		m_exp_time = (unsigned) (exp_time_sec * 1000000);
+			m_exp_time = (unsigned) (exp_time_sec * 1000000);
 		break;
 
 		case MILLISEC_GATE:
-		m_exp_time = (unsigned) (exp_time_sec * 1000);
+			m_exp_time = (unsigned) (exp_time_sec * 1000);
 		break;
 
 		case SECONDS_GATE:
-		m_exp_time = (unsigned) (exp_time_sec * 1);
+			m_exp_time = (unsigned) (exp_time_sec * 1);
 		break;
 	}
 }
@@ -339,19 +356,20 @@ void XpadCamera::getExpTime(double& exp_time_sec)
 {
 	DEB_MEMBER_FUNCT();
 
+	double m_exp_time_temp = m_exp_time;
 	//- 1=MICROSEC_GATE; 2=MILLISEC_GATE; 3=SECONDS_GATE
 	switch(m_time_unit)
 	{
 		case MICROSEC_GATE:
-		exp_time_sec = m_exp_time / 1000000;
+		exp_time_sec = (double) (m_exp_time_temp / 1000000);
 		break;
 
 		case MILLISEC_GATE:
-		exp_time_sec = m_exp_time / 1000;
+		exp_time_sec = (double) (m_exp_time_temp / 1000);
 		break;
 
 		case SECONDS_GATE:
-		exp_time_sec = m_exp_time / 1;
+		exp_time_sec = (double) (m_exp_time_temp / 1);
 		break;
 	}
 	
@@ -367,7 +385,7 @@ void XpadCamera::setNbFrames(int nb_frames)
 	DEB_MEMBER_FUNCT();
 	DEB_PARAM() << DEB_VAR1(nb_frames);
 	m_nb_frames = nb_frames;
-	if(m_nb_frames == 0) //- Video mode
+	/*if(m_nb_frames == 0) //- Video mode
 	{
 		m_nb_frames = 1;
 		m_video_mode = true;
@@ -375,7 +393,7 @@ void XpadCamera::setNbFrames(int nb_frames)
 	else
 	{
 		m_video_mode = false;
-	}
+	}*/
 }
 
 //-----------------------------------------------------
@@ -527,7 +545,7 @@ void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
 			}
 			
 			pOneImage = new uint16_t[ m_full_image_size_in_bytes/2 ];
-			
+
 			if (xpci_getOneImage(	m_pixel_depth,
 									m_modules_mask,
 									m_chip_number,
@@ -535,7 +553,8 @@ void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
 									m_trigger_type,
 									m_exp_time,
 									m_time_unit,
-									30000)==-1)
+									m_exp_time * 1050 //- timeout: cf Fred B.
+									)==-1)
 			{
 				DEB_ERROR()<< "Error: readOneImage as returned an error..." ;
 			}
@@ -650,7 +669,7 @@ void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
 
 		m_status = XpadCamera::Readout;
 		
-		DEB_TRACE() 	<< "#######################"
+		DEB_TRACE() 	<< "\n#######################"
 				<< "\nall images are acquired"
 				<< "\n#######################" ;
 		
@@ -876,7 +895,7 @@ vector<uint16_t> XpadCamera::getDacl()
 {
 	DEB_MEMBER_FUNCT();
 
-	size_t image_size_in_bytes = ((80 * m_chip_number) * 2 + 6*2)  * 120 * m_module_number;
+	/*size_t image_size_in_bytes = ((80 * m_chip_number) * 2 + 6*2)  * 120 * m_module_number;
 	pOneImage = new uint16_t[ image_size_in_bytes / 2 ];
 	
 	if(xpci_getModConfig(m_modules_mask, m_chip_number,pOneImage)==0)
@@ -918,7 +937,7 @@ vector<uint16_t> XpadCamera::getDacl()
 		throw LIMA_HW_EXC(Error, "Error in getDacl!");
 	}
 
-	return clean_image;
+	return clean_image;*/
 	
 }
 
@@ -926,8 +945,117 @@ vector<uint16_t> XpadCamera::getDacl()
 //-----------------------------------------------------
 //		Get the DACL values
 //-----------------------------------------------------
-void saveAndloadDacl(uint16_t* all_dacls);
+void XpadCamera::saveAndloadDacl(uint16_t* all_dacls)
 {
+}
+
+//-----------------------------------------------------
+//		Close the xpix lib
+//-----------------------------------------------------
+void XpadCamera::xpixClose()
+{
+	// Close XPCI Lib
+    	xpci_close(0);
+    	cout << "XPCI Lib closed" << endl;
+}
+
+//-----------------------------------------------------
+//		Init the xpix lib
+//-----------------------------------------------------
+void XpadCamera::xpixInit()
+{
+	DEB_MEMBER_FUNCT();
+
+	//- INIT of the PCI Express board
+    	if(xpci_init(0,XPAD_32) == 0)
+        	cout << "PCIe board succesfully Initialized" << endl;
+
+	cout << "PCIe board succesfully Reseting..." << endl;
+	usleep(100);
+	xpci_resetBoard(0); // reset PCIex Board
+	usleep(100);
+	cout << "PCIe board succesfully Reset ???" << endl;
+
+	m_status = XpadCamera::Ready;
+
+	//- Hardcoded temporarly
+	m_time_unit				= MILLISEC_GATE; // 1=MICROSEC_GATE; 2=MILLISEC_GATE; 3=SECONDS_GATE
+	m_pixel_depth = B4;
+
+	//- FParameters
+	m_fparameter_deadtime		= 0;
+	m_fparameter_init		= 0;
+	m_fparameter_shutter		= 0;
+	m_fparameter_ovf		= 0;
+	m_fparameter_mode		= 0;
+	m_fparameter_n			= 0;
+	m_fparameter_p			= 0;
+	m_fparameter_GP1		= 0;
+	m_fparameter_GP2		= 0;
+	m_fparameter_GP3		= 0;
+	m_fparameter_GP4		= 0;
+
+	m_acquisition_type		= 2; // Slow B4
+	m_video_mode 			= false;
+
+	
+	//-------------------------------------------------------------
+
+	//Reset of the PICExpress
+	//- Removed because not used in the example program: DAQ_FRED and xpad_simple
+	/*if(xpci_resetBoard(BOARDNUM) == 0)
+	{
+		DEB_TRACE() << "PCIe hardware reset is OK";
+	}
+	else
+	{
+		DEB_ERROR() << "PCIe hardware reset has FAILED:" ;
+		throw LIMA_HW_EXC(Error, "Error in PCIe hardware reset!");
+	}*/
+
+	//-------------------------------------------------------------
+	//- Get Modules that are ready
+	if (xpci_modAskReady(&m_modules_mask) == 0)
+	{
+		DEB_TRACE() << "Ask modules that are ready: OK (modules mask = " << std::hex << m_modules_mask << ")" ;
+		m_module_number = xpci_getModNb(m_modules_mask);
+		if (m_module_number !=0)
+		{
+			DEB_TRACE() << "--> Number of Modules 		 = " << m_module_number ;			
+		}
+		else
+		{
+			DEB_ERROR() << "No modules found: retry to Init" ;
+			//- Test if PCIe is OK
+			if(xpci_isPCIeOK() == 0) 
+			{
+				DEB_TRACE() << "PCIe hardware check is OK" ;
+			}
+			else
+			{
+				DEB_ERROR() << "PCIe hardware check has FAILED:" ;
+				DEB_ERROR() << "1. Check if green led is ON (if not go to p.3)" ;
+				DEB_ERROR() << "2. Reset PCIe board" ;
+				DEB_ERROR() << "3. Power off and power on PC (do not reboot, power has to be cut off)\n" ;
+				throw LIMA_HW_EXC(Error, "PCIe hardware check has FAILED!");
+			}
+			throw LIMA_HW_EXC(Error, "No modules found: retry to Init");			
+		}	
+	}
+	else
+	{
+		DEB_ERROR() << "Ask modules that are ready: FAILED" ;
+		throw LIMA_HW_EXC(Error, "No Modules are ready");
+	}
+
+
+	//ATTENTION: We consider that image size is with always 8 modules ! 
+	m_image_size = Size(80 * m_chip_number ,120 * 8);
+	DEB_TRACE() << "--> Number of chips 		 = " << std::dec << m_chip_number ;
+	DEB_TRACE() << "--> Image width 	(pixels) = " << std::dec << m_image_size.getWidth() ;
+	DEB_TRACE() << "--> Image height	(pixels) = " << std::dec << m_image_size.getHeight() ;
+
+	
 }
 
 
