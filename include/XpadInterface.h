@@ -153,12 +153,6 @@ class XpadInterface : public HwInterface
 	//- Save and load Dacl
 	void saveAndloadDacl(uint16_t* all_dacls)
 		{m_cam.saveAndloadDacl(all_dacls);}
-	//- Close the xpix lib
-	void xpixClose()
-		{m_cam.xpixClose();}
-	//- Init the xpix lib
-	void xpixInit()
-		{m_cam.xpixInit();}
 	
 
  private:
