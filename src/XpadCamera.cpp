@@ -16,13 +16,13 @@ static const int 	BOARDNUM 	= 0;
 //- Ctor
 //---------------------------
 XpadCamera::XpadCamera(): 	m_buffer_cb_mgr(m_buffer_alloc_mgr),
-							m_buffer_ctrl_mgr(m_buffer_cb_mgr),
-							m_modules_mask(0x00),
-							m_chip_number(7),
-							m_exp_time(1000),
-							m_pixel_depth(B4),
-							m_trigger_type(INTERN_GATE),
-							m_nb_frames(1)
+m_buffer_ctrl_mgr(m_buffer_cb_mgr),
+m_modules_mask(0x00),
+m_chip_number(7),
+m_exp_time(1000),
+m_pixel_depth(B4),
+m_trigger_type(INTERN_GATE),
+m_nb_frames(1)
 {
 	DEB_CONSTRUCTOR();
 	m_status = XpadCamera::Ready;
@@ -47,19 +47,19 @@ XpadCamera::XpadCamera(): 	m_buffer_cb_mgr(m_buffer_alloc_mgr),
 	m_acquisition_type		= 2; // Slow B4
 	m_video_mode 			= false;
 
-	
+
 	//-------------------------------------------------------------
 
 	//Reset of the PICExpress
 	//- Removed because not used in the example program: DAQ_FRED and xpad_simple
 	/*if(xpci_resetBoard(BOARDNUM) == 0)
 	{
-		DEB_TRACE() << "PCIe hardware reset is OK";
+	DEB_TRACE() << "PCIe hardware reset is OK";
 	}
 	else
 	{
-		DEB_ERROR() << "PCIe hardware reset has FAILED:" ;
-		throw LIMA_HW_EXC(Error, "Error in PCIe hardware reset!");
+	DEB_ERROR() << "PCIe hardware reset has FAILED:" ;
+	throw LIMA_HW_EXC(Error, "Error in PCIe hardware reset!");
 	}*/
 
 	//-------------------------------------------------------------
@@ -136,7 +136,7 @@ void XpadCamera::start()
 
 	if(m_acquisition_type == 0)
 	{
-		 //- Post XPAD_DLL_START_SLOW_MSG msg (aka getOneImage)
+		//- Post XPAD_DLL_START_SLOW_MSG msg (aka getOneImage)
 		this->post(new yat::Message(XPAD_DLL_START_SLOW_B2_MSG), kPOST_MSG_TMO);
 	}
 	else if (m_acquisition_type == 1)
@@ -148,6 +148,11 @@ void XpadCamera::start()
 	{
 		//- Post XPAD_DLL_START_SLOW_MSG_B4 msg (aka getOneImage)
 		this->post(new yat::Message(XPAD_DLL_START_SLOW_B4_MSG), kPOST_MSG_TMO);
+	}
+	else if (m_acquisition_type == 3)
+	{
+		//- Post XPAD_DLL_START_FAST_ASYNC_MSG msg (aka getImgSeqAs)
+		this->post(new yat::Message(XPAD_DLL_START_FAST_ASYNC_MSG), kPOST_MSG_TMO);
 	}
 	else
 	{
@@ -194,16 +199,16 @@ void XpadCamera::setPixelDepth(ImageType pixel_depth)
 	DEB_MEMBER_FUNCT();
 	switch( pixel_depth )
 	{
-		case Bpp16:
-			m_pixel_depth = B2;
+	case Bpp16:
+		m_pixel_depth = B2;
 		break;
-	
-		case Bpp32:
-			m_pixel_depth = B4;
+
+	case Bpp32:
+		m_pixel_depth = B4;
 		break;
-		default:
-			DEB_ERROR() << "Pixel Depth is unsupported: only 16 or 32 bits is supported" ;
-			throw LIMA_HW_EXC(Error, "Pixel Depth is unsupported: only 16 or 32 bits is supported");
+	default:
+		DEB_ERROR() << "Pixel Depth is unsupported: only 16 or 32 bits is supported" ;
+		throw LIMA_HW_EXC(Error, "Pixel Depth is unsupported: only 16 or 32 bits is supported");
 		break;
 	}
 }
@@ -216,12 +221,12 @@ void XpadCamera::getPixelDepth(ImageType& pixel_depth)
 	DEB_MEMBER_FUNCT();
 	switch( m_pixel_depth )
 	{
-		case B2:
-			pixel_depth = Bpp16;
+	case B2:
+		pixel_depth = Bpp16;
 		break;
-	
-		case B4:
-			pixel_depth = Bpp32;
+
+	case B4:
+		pixel_depth = Bpp32;
 		break;	
 	}
 }
@@ -270,18 +275,18 @@ void XpadCamera::setTrigMode(TrigMode mode)
 
 	switch( mode )
 	{
-		case IntTrig:
-			m_trigger_type = INTERN_GATE;
+	case IntTrig:
+		m_trigger_type = INTERN_GATE;
 		break;
-		case ExtTrigSingle:
-			m_trigger_type = 10; //- EXTERN_TRIG (eg TIMED)
+	case ExtTrigSingle:
+		m_trigger_type = 10; //- EXTERN_TRIG (eg TIMED)
 		break;
-		case ExtGate:
-			m_trigger_type = EXTERN_GATE;
+	case ExtGate:
+		m_trigger_type = EXTERN_GATE;
 		break;
-		default:
-			DEB_ERROR() << "Error: Trigger mode unsupported: only INTERN_GATE, EXTERN_TRIG or EXTERN_GATE" ;
-			throw LIMA_HW_EXC(Error, "Trigger mode unsupported: only INTERN_GATE, EXTERN_TRIG or EXTERN_GATE");
+	default:
+		DEB_ERROR() << "Error: Trigger mode unsupported: only INTERN_GATE, EXTERN_TRIG or EXTERN_GATE" ;
+		throw LIMA_HW_EXC(Error, "Trigger mode unsupported: only INTERN_GATE, EXTERN_TRIG or EXTERN_GATE");
 		break;
 	}
 }
@@ -295,19 +300,19 @@ void XpadCamera::getTrigMode(TrigMode& mode)
 	DEB_MEMBER_FUNCT();
 	switch( m_trigger_type )
 	{
-		case INTERN_GATE:
-			mode = IntTrig;
+	case INTERN_GATE:
+		mode = IntTrig;
 		break;
-		case 10: //- EXTERN_TRIG (eg TIMED)
-			mode = ExtTrigSingle;
+	case 10: //- EXTERN_TRIG (eg TIMED)
+		mode = ExtTrigSingle;
 		break;
-		case EXTERN_GATE:
-			mode = ExtGate;
+	case EXTERN_GATE:
+		mode = ExtGate;
 		break;
-		default:
+	default:
 		break;
 	}
-    	DEB_RETURN() << DEB_VAR1(mode);
+	DEB_RETURN() << DEB_VAR1(mode);
 }
 
 
@@ -335,16 +340,16 @@ void XpadCamera::setExpTime(double exp_time_sec)
 	//- 1=MICROSEC_GATE; 2=MILLISEC_GATE; 3=SECONDS_GATE
 	switch(m_time_unit)
 	{
-		case MICROSEC_GATE:
-			m_exp_time = (unsigned) (exp_time_sec * 1000000);
+	case MICROSEC_GATE:
+		m_exp_time = (unsigned) (exp_time_sec * 1000000);
 		break;
 
-		case MILLISEC_GATE:
-			m_exp_time = (unsigned) (exp_time_sec * 1000);
+	case MILLISEC_GATE:
+		m_exp_time = (unsigned) (exp_time_sec * 1000);
 		break;
 
-		case SECONDS_GATE:
-			m_exp_time = (unsigned) (exp_time_sec * 1);
+	case SECONDS_GATE:
+		m_exp_time = (unsigned) (exp_time_sec * 1);
 		break;
 	}
 }
@@ -360,19 +365,19 @@ void XpadCamera::getExpTime(double& exp_time_sec)
 	//- 1=MICROSEC_GATE; 2=MILLISEC_GATE; 3=SECONDS_GATE
 	switch(m_time_unit)
 	{
-		case MICROSEC_GATE:
+	case MICROSEC_GATE:
 		exp_time_sec = (double) (m_exp_time_temp / 1000000);
 		break;
 
-		case MILLISEC_GATE:
+	case MILLISEC_GATE:
 		exp_time_sec = (double) (m_exp_time_temp / 1000);
 		break;
 
-		case SECONDS_GATE:
+	case SECONDS_GATE:
 		exp_time_sec = (double) (m_exp_time_temp / 1);
 		break;
 	}
-	
+
 	DEB_RETURN() << DEB_VAR1(exp_time_sec);
 }
 
@@ -387,12 +392,12 @@ void XpadCamera::setNbFrames(int nb_frames)
 	m_nb_frames = nb_frames;
 	/*if(m_nb_frames == 0) //- Video mode
 	{
-		m_nb_frames = 1;
-		m_video_mode = true;
+	m_nb_frames = 1;
+	m_video_mode = true;
 	}
 	else
 	{
-		m_video_mode = false;
+	m_video_mode = false;
 	}*/
 }
 
@@ -423,341 +428,524 @@ void XpadCamera::getStatus(XpadCamera::Status& status)
 void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
 {
 	DEB_MEMBER_FUNCT();
-  try
-  {
-    switch ( msg.type() )
-    {
-      //-----------------------------------------------------	
-      case yat::TASK_INIT:
-      {
-        DEB_TRACE() <<"XpadCamera::->TASK_INIT";          
-      }
-      break;
-      //-----------------------------------------------------    
-      case yat::TASK_EXIT:
-      {
-        DEB_TRACE() <<"XpadCamera::->TASK_EXIT";                
-      }
-      break;
-      //-----------------------------------------------------    
-      case yat::TASK_TIMEOUT:
-      {
-		DEB_TRACE() <<"XpadCamera::->TASK_TIMEOUT";       
-      }
-      break;
-	  //-----------------------------------------------------    
-	  case XPAD_DLL_START_SLOW_B2_MSG:
-      {
-		DEB_TRACE() <<"XpadCamera::->XPAD_DLL_START_SLOW_B2_MSG";       
-
-		m_status = XpadCamera::Exposure;
-		
-		for( int i=0 ; i < m_nb_frames ; i++ )
+	try
+	{
+		switch ( msg.type() )
 		{
-			if (m_stop_asked == true)
+			//-----------------------------------------------------	
+		case yat::TASK_INIT:
 			{
-				DEB_TRACE() <<"Stop asked: exit without allocating new images..." ;
+				DEB_TRACE() <<"XpadCamera::->TASK_INIT";          
+			}
+			break;
+			//-----------------------------------------------------    
+		case yat::TASK_EXIT:
+			{
+				DEB_TRACE() <<"XpadCamera::->TASK_EXIT";                
+			}
+			break;
+			//-----------------------------------------------------    
+		case yat::TASK_TIMEOUT:
+			{
+				DEB_TRACE() <<"XpadCamera::->TASK_TIMEOUT";       
+			}
+			break;
+			//-----------------------------------------------------    
+		case XPAD_DLL_START_SLOW_B2_MSG:
+			{
+				DEB_TRACE() <<"XpadCamera::->XPAD_DLL_START_SLOW_B2_MSG";       
+
+				m_status = XpadCamera::Exposure;
+
+				for( int i=0 ; i < m_nb_frames ; i++ )
+				{
+					if (m_stop_asked == true)
+					{
+						DEB_TRACE() <<"Stop asked: exit without allocating new images..." ;
+						m_status = XpadCamera::Ready;
+						return;
+					}
+
+
+					pOneImage = new uint16_t[ m_full_image_size_in_bytes / 2 ]; //- Divided by 2 because of uint16
+
+					if (xpci_getOneImage(	m_pixel_depth,
+						m_modules_mask,
+						m_chip_number,
+						(uint16_t *)pOneImage,
+						m_trigger_type,
+						m_exp_time,
+						m_time_unit,
+						30000)==-1)
+					{
+						DEB_ERROR()<< "Error: readOneImage as returned an error..." ;
+					}
+
+					m_status = XpadCamera::Readout;
+
+					DEB_TRACE() <<"Image# "<< i << " acquired" ;
+
+					//- clean the image and call new frame for each frame
+					StdBufferCbMgr& buffer_mgr = m_buffer_cb_mgr;
+					DEB_TRACE() <<"-> clean acquired image and publish it through newFrameReady()";
+
+					int buffer_nb, concat_frame_nb;
+					buffer_mgr.setStartTimestamp(Timestamp::now());
+					buffer_mgr.acqFrameNb2BufferNb(i, buffer_nb, concat_frame_nb);
+
+					uint16_t *ptr = (uint16_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
+					//clean the ptr with zero memory, pixels of a not available module are set to "0" 
+					memset((uint16_t *)ptr,0,m_image_size.getWidth() * m_image_size.getHeight() * 2);
+
+					//iterate on all lines of all modules returned by xpix API 
+					int k=0;
+					for(int j = 0; j < 120 * m_module_number; j++) 
+					{
+						uint16_t	OneLine[6+80*m_chip_number];
+
+						//copy entire line with its header and footer
+						for(k = 0; k < (6+80*m_chip_number); k++)
+							OneLine[k] = pOneImage[j*(6+80*m_chip_number)+k];
+
+						//compute "offset line" where to copy OneLine[] in the *ptr, to ensure that the lines are copied in order of modules
+						int offset = ((120*(OneLine[1]-1))+(OneLine[4]-1)); 
+
+						//copy cleaned line in the lima buffer
+						for(k = 0; k < (80*m_chip_number); k++)
+							ptr[(offset*80*m_chip_number)+k] = OneLine[5+k];
+					}
+
+					DEB_TRACE() << "image# " << i <<" cleaned" ;
+					HwFrameInfoType frame_info;
+					frame_info.acq_frame_nb = i;
+					//- raise the image to lima
+					buffer_mgr.newFrameReady(frame_info);
+
+					DEB_TRACE() <<"free image pointer";
+					delete[] pOneImage;
+				}
+
 				m_status = XpadCamera::Ready;
-				return;
 			}
-			
-
-			pOneImage = new uint16_t[ m_full_image_size_in_bytes / 2 ]; //- Divided by 2 because of uint16
-			
-			if (xpci_getOneImage(	m_pixel_depth,
-									m_modules_mask,
-									m_chip_number,
-									(uint16_t *)pOneImage,
-									m_trigger_type,
-									m_exp_time,
-									m_time_unit,
-									30000)==-1)
+			break;
+			//-----------------------------------------------------    
+		case XPAD_DLL_START_SLOW_B4_MSG:
 			{
-				DEB_ERROR()<< "Error: readOneImage as returned an error..." ;
-			}
+				DEB_TRACE() <<"XpadCamera::->XPAD_DLL_START_SLOW_B4_MSG";       
 
-			m_status = XpadCamera::Readout;
+				m_status = XpadCamera::Exposure;
 
-			DEB_TRACE() <<"Image# "<< i << " acquired" ;
+				for( int i=0 ; i < m_nb_frames ;  )
+				{
+					if (m_video_mode == true)
+					{
+						//- Re init i
+						i = 0;
+					}
+					if (m_stop_asked == true)
+					{
+						DEB_TRACE() <<"Stop asked: exit without allocating new images..." ;
+						m_status = XpadCamera::Ready;
+						return;
+					}
 
-			//- clean the image and call new frame for each frame
-			StdBufferCbMgr& buffer_mgr = m_buffer_cb_mgr;
-			DEB_TRACE() <<"-> clean acquired image and publish it through newFrameReady()";
+					pOneImage = new uint16_t[ m_full_image_size_in_bytes/2 ];
 
-			int buffer_nb, concat_frame_nb;
-			buffer_mgr.setStartTimestamp(Timestamp::now());
-			buffer_mgr.acqFrameNb2BufferNb(i, buffer_nb, concat_frame_nb);
+					if (xpci_getOneImage(	m_pixel_depth,
+						m_modules_mask,
+						m_chip_number,
+						(uint16_t *)pOneImage,
+						m_trigger_type,
+						m_exp_time,
+						m_time_unit,
+						m_exp_time * 1050 //- timeout: cf Fred B.
+						)==-1)
+					{
+						DEB_ERROR()<< "Error: readOneImage as returned an error..." ;
+					}
 
-			uint16_t *ptr = (uint16_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
-			//clean the ptr with zero memory, pixels of a not available module are set to "0" 
-			memset((uint16_t *)ptr,0,m_image_size.getWidth() * m_image_size.getHeight() * 2);
-				
-			//iterate on all lines of all modules returned by xpix API 
-			int k=0;
-			for(int j = 0; j < 120 * m_module_number; j++) 
-			{
-				uint16_t	OneLine[6+80*m_chip_number];
-				
-				//copy entire line with its header and footer
-				for(k = 0; k < (6+80*m_chip_number); k++)
-					OneLine[k] = pOneImage[j*(6+80*m_chip_number)+k];
-				
-				//compute "offset line" where to copy OneLine[] in the *ptr, to ensure that the lines are copied in order of modules
-				int offset = ((120*(OneLine[1]-1))+(OneLine[4]-1)); 
-				
-				//copy cleaned line in the lima buffer
-				for(k = 0; k < (80*m_chip_number); k++)
-					ptr[(offset*80*m_chip_number)+k] = OneLine[5+k];
-			}
-				
-			DEB_TRACE() << "image# " << i <<" cleaned" ;
-			HwFrameInfoType frame_info;
-			frame_info.acq_frame_nb = i;
-			//- raise the image to lima
-			buffer_mgr.newFrameReady(frame_info);
+					m_status = XpadCamera::Readout;
 
-			DEB_TRACE() <<"free image pointer";
-			delete[] pOneImage;
-		}
+					DEB_TRACE() <<"Image# "<< i << " acquired" ;
 
-		m_status = XpadCamera::Ready;
-      	}
-      	break;
-	//-----------------------------------------------------    
-	case XPAD_DLL_START_SLOW_B4_MSG:
-      	{
-		DEB_TRACE() <<"XpadCamera::->XPAD_DLL_START_SLOW_B4_MSG";       
+					//- clean the image and call new frame for each frame
+					StdBufferCbMgr& buffer_mgr = m_buffer_cb_mgr;
+					DEB_TRACE() <<"-> clean acquired image and publish it through newFrameReady()";
 
-		m_status = XpadCamera::Exposure;
-		
-		for( int i=0 ; i < m_nb_frames ;  )
-		{
-			if (m_video_mode == true)
-			{
-				//- Re init i
-				i = 0;
-			}
-			if (m_stop_asked == true)
-			{
-				DEB_TRACE() <<"Stop asked: exit without allocating new images..." ;
+					int buffer_nb, concat_frame_nb;
+					buffer_mgr.setStartTimestamp(Timestamp::now());
+					buffer_mgr.acqFrameNb2BufferNb(i, buffer_nb, concat_frame_nb);
+
+					uint32_t *ptr = (uint32_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
+					//clean the ptr with zero memory, pixels of a not available module are set to "0" 
+					memset((uint32_t *)ptr,0,m_image_size.getWidth() * m_image_size.getHeight() * 4);
+
+					//iterate on all lines of all modules returned by xpix API 
+					int k=0;
+					for(int j = 0; j < 120 * m_module_number; j++) 
+					{
+						uint16_t	OneLine[6+(80*m_chip_number)*2];
+						uint32_t	OneLinePix[80*m_chip_number];
+
+						//copy entire line with its header and footer
+						for(k = 0; k < (6+(80*m_chip_number)*2); k++)
+							OneLine[k] = pOneImage[j*(6+(80*m_chip_number)*2)+k];
+
+						//copy entire line without header&footer into OneLinePix
+						memcpy((uint32_t *)OneLinePix,(uint16_t *)(&OneLine[5]),80*m_chip_number*4);
+
+						//compute "offset line" where to copy OneLine[] in the *ptr, to ensure that the lines are copied in order of modules
+						int offset = ((120*(OneLine[1]-1))+(OneLine[4]-1)); 
+
+						//copy cleaned line in the lima buffer
+						for(k = 0; k < (80*m_chip_number); k++)
+							ptr[(offset*80*m_chip_number)+k] = OneLinePix[k];
+					}
+
+					DEB_TRACE() << "Image# " << i <<" cleaned" ;
+					HwFrameInfoType frame_info;
+					frame_info.acq_frame_nb = i;
+
+					//- raise the image to lima
+					buffer_mgr.newFrameReady(frame_info);
+
+					DEB_TRACE() <<"free image pointer";
+					delete[] pOneImage;
+
+					i++;
+				}
+
 				m_status = XpadCamera::Ready;
-				return;
 			}
-			
-			pOneImage = new uint16_t[ m_full_image_size_in_bytes/2 ];
+			break;
 
-			if (xpci_getOneImage(	m_pixel_depth,
-									m_modules_mask,
-									m_chip_number,
-									(uint16_t *)pOneImage,
-									m_trigger_type,
-									m_exp_time,
-									m_time_unit,
-									m_exp_time * 1050 //- timeout: cf Fred B.
-									)==-1)
+			//-----------------------------------------------------    
+		case XPAD_DLL_START_FAST_MSG:	
 			{
-				DEB_ERROR()<< "Error: readOneImage as returned an error..." ;
+				DEB_TRACE() <<"XpadCamera::->XPAD_DLL_START_FAST_MSG";
+
+				//- A mettre dans le prepareAcq?
+				// allocate multiple buffers
+				DEB_TRACE() <<"allocating images array (" << m_nb_frames << " images)";
+				pSeqImage = new uint16_t* [ m_nb_frames ];
+
+				DEB_TRACE() <<"allocating every image pointer of the images array (1 image full size = "<< m_full_image_size_in_bytes << ") ";
+				for( int i=0 ; i < m_nb_frames ; i++ )
+					pSeqImage[i] = new uint16_t[ m_full_image_size_in_bytes / 2 ];
+
+				m_status = XpadCamera::Exposure;
+
+				//- Start the img sequence
+				DEB_TRACE() <<"start acquiring a sequence of images";	
+				cout << " ============================================== " << endl;
+				cout << "Parametres pour getImgSeq: "<< endl;
+				cout << "m_pixel_depth 	= "<< m_pixel_depth << endl;
+				cout << "m_modules_mask = "<< m_modules_mask << endl;
+				cout << "m_chip_number 	= "<< m_chip_number << endl;
+				cout << "m_trigger_type = "<< m_trigger_type << endl;
+				cout << "m_exp_time 	= "<< m_exp_time << endl;
+				cout << "m_time_unit 	= "<< m_time_unit << endl;
+				cout << "m_nb_frames 	= "<< m_nb_frames << endl;
+
+				if ( xpci_getImgSeq(	m_pixel_depth, 
+					m_modules_mask,
+					m_chip_number,
+					m_trigger_type,
+					m_exp_time,
+					m_time_unit,
+					m_nb_frames,
+					(void**)pSeqImage,
+					8000) == -1)
+				{
+					DEB_ERROR() << "Error: getImgSeq as returned an error..." ;
+
+					DEB_TRACE() << "Freeing every image pointer of the images array";
+					for(int i=0 ; i < m_nb_frames ; i++)
+						delete[] pSeqImage[i];
+
+					DEB_TRACE() << "Freeing images array";
+					delete[] pSeqImage;			
+
+					m_status = XpadCamera::Fault;
+					throw LIMA_HW_EXC(Error, "getImgSeq as returned an error...");
+
+
+				}
+
+				m_status = XpadCamera::Readout;
+
+				DEB_TRACE() 	<< "\n#######################"
+					<< "\nall images are acquired"
+					<< "\n#######################" ;
+
+				//- ATTENTION :
+				//- Xpix acquires a buffer sized according to m_module_number.
+				//- Displayed/Lima image will be ALWAYS 560*960, even if some modules are not availables ! 
+				//- Image zone where a module is not available will be set to "zero"
+
+				//XPIX LIB buffer						//Device requested buffer
+				//--------------						//--------------
+				//line 1 	mod1						//line 1 	mod1
+				//line 1 	mod2						//line 2 	mod1
+				//line 1 	mod3						//line 3 	mod1
+				//...									//...
+				//line 1	mod8						//line 120	mod1
+				//--------------						//--------------
+				//line 2 	mod1						//line 1 	mod2
+				//line 2 	mod2						//line 2 	mod2
+				//line 2 	mod3						//line 3 	mod2
+				//...									//...
+				//line 2	mod4						//line 120	mod2
+				//--------------						//--------------
+				//...									//...
+				//--------------						//--------------
+				//line 120 	mod1						//line 1 	mod8
+				//line 120 	mod2						//line 2 	mod8
+				//line 120 	mod3						//line 3 	mod8
+				//...									//...
+				//line 120	mod8						//line 120	mod8
+
+				int	i=0, j=0, k=0;
+
+				//- clean each image and call new frame for each frame
+				StdBufferCbMgr& buffer_mgr = m_buffer_cb_mgr;
+				DEB_TRACE() <<"Cleanning each acquired image and publish it through newFrameReady()";
+				for(i=0; i<m_nb_frames; i++)
+				{
+					pOneImage = pSeqImage[i];
+
+					int buffer_nb, concat_frame_nb;
+					buffer_mgr.setStartTimestamp(Timestamp::now());
+					buffer_mgr.acqFrameNb2BufferNb(i, buffer_nb, concat_frame_nb);
+
+					uint16_t *ptr = (uint16_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
+					//clean the ptr with zero memory, pixels of a not available module are set to "0" 
+					memset((uint16_t *)ptr,0,m_image_size.getWidth() * m_image_size.getHeight() * 2);
+
+					//iterate on all lines of all modules returned by xpix API 
+					for(j = 0; j < 120 * m_module_number; j++) 
+					{
+						uint16_t	OneLine[6+80*m_chip_number];
+
+						//copy entire line with its header and footer
+						for(k = 0; k < (6+80*m_chip_number); k++)
+							OneLine[k] = pOneImage[j*(6+80*m_chip_number)+k];
+
+						//compute "offset line" where to copy OneLine[] in the *ptr, to ensure that the lines are copied in order of modules
+						int offset = ((120*(OneLine[1]-1))+(OneLine[4]-1)); 
+
+						//copy cleaned line in the lima buffer
+						for(k = 0; k < (80*m_chip_number); k++)
+							ptr[(offset*80*m_chip_number)+k] = OneLine[5+k];
+					}
+
+					DEB_TRACE() << "image# " << i <<" cleaned" ;
+					HwFrameInfoType frame_info;
+					frame_info.acq_frame_nb = i;
+					//- raise the image to lima
+					buffer_mgr.newFrameReady(frame_info);
+				}
+
+				DEB_TRACE() <<"Freeing every image pointer of the images array";
+				for(i=0 ; i < m_nb_frames ; i++)
+					delete[] pSeqImage[i];
+				DEB_TRACE() <<"Freeing images array";
+				delete[] pSeqImage;
+				m_status = XpadCamera::Ready;
+				DEB_TRACE() <<"m_status is Ready";
 			}
-
-			m_status = XpadCamera::Readout;
-
-			DEB_TRACE() <<"Image# "<< i << " acquired" ;
-
-			//- clean the image and call new frame for each frame
-			StdBufferCbMgr& buffer_mgr = m_buffer_cb_mgr;
-			DEB_TRACE() <<"-> clean acquired image and publish it through newFrameReady()";
-
-			int buffer_nb, concat_frame_nb;
-			buffer_mgr.setStartTimestamp(Timestamp::now());
-			buffer_mgr.acqFrameNb2BufferNb(i, buffer_nb, concat_frame_nb);
-
-			uint32_t *ptr = (uint32_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
-			//clean the ptr with zero memory, pixels of a not available module are set to "0" 
-			memset((uint32_t *)ptr,0,m_image_size.getWidth() * m_image_size.getHeight() * 4);
-
-			//iterate on all lines of all modules returned by xpix API 
-			int k=0;
-			for(int j = 0; j < 120 * m_module_number; j++) 
-			{
-				uint16_t	OneLine[6+(80*m_chip_number)*2];
-				uint32_t	OneLinePix[80*m_chip_number];
-				
-				//copy entire line with its header and footer
-				for(k = 0; k < (6+(80*m_chip_number)*2); k++)
-					OneLine[k] = pOneImage[j*(6+(80*m_chip_number)*2)+k];
-
-				//copy entire line without header&footer into OneLinePix
-				memcpy((uint32_t *)OneLinePix,(uint16_t *)(&OneLine[5]),80*m_chip_number*4);
-
-				//compute "offset line" where to copy OneLine[] in the *ptr, to ensure that the lines are copied in order of modules
-				int offset = ((120*(OneLine[1]-1))+(OneLine[4]-1)); 
-
-				//copy cleaned line in the lima buffer
-				for(k = 0; k < (80*m_chip_number); k++)
-					ptr[(offset*80*m_chip_number)+k] = OneLinePix[k];
-			}
-				
-			DEB_TRACE() << "Image# " << i <<" cleaned" ;
-			HwFrameInfoType frame_info;
-			frame_info.acq_frame_nb = i;
-
-			//- raise the image to lima
-			buffer_mgr.newFrameReady(frame_info);
-
-			DEB_TRACE() <<"free image pointer";
-			delete[] pOneImage;
-
-			i++;
-		}
-
-		m_status = XpadCamera::Ready;
-      }
-      break;
-
-      //-----------------------------------------------------    
-      case XPAD_DLL_START_FAST_MSG:	
-      {
-		DEB_TRACE() <<"XpadCamera::->XPAD_DLL_START_FAST_MSG";
-	
-		//- A mettre dans le prepareAcq?
-		// allocate multiple buffers
-		DEB_TRACE() <<"allocating images array (" << m_nb_frames << " images)";
-		pSeqImage = new uint16_t* [ m_nb_frames ];
-
-		DEB_TRACE() <<"allocating every image pointer of the images array (1 image full size = "<< m_full_image_size_in_bytes << ") ";
-		for( int i=0 ; i < m_nb_frames ; i++ )
-			pSeqImage[i] = new uint16_t[ m_full_image_size_in_bytes / 2 ];
-
-		m_status = XpadCamera::Exposure;
-	
-		//- Start the img sequence
-		DEB_TRACE() <<"start acquiring a sequence of images";	
-		cout << " ============================================== " << endl;
-		cout << "Parametres pour getImgSeq: "<< endl;
-		cout << "m_pixel_depth 	= "<< m_pixel_depth << endl;
-		cout << "m_modules_mask = "<< m_modules_mask << endl;
-		cout << "m_chip_number 	= "<< m_chip_number << endl;
-		cout << "m_trigger_type = "<< m_trigger_type << endl;
-		cout << "m_exp_time 	= "<< m_exp_time << endl;
-		cout << "m_time_unit 	= "<< m_time_unit << endl;
-		cout << "m_nb_frames 	= "<< m_nb_frames << endl;
-
-		if ( xpci_getImgSeq(	m_pixel_depth, 
-								m_modules_mask,
-								m_chip_number,
-								m_trigger_type,
-								m_exp_time,
-								m_time_unit,
-								m_nb_frames,
-								(void**)pSeqImage,
-								8000) == -1)
-		{
-			DEB_ERROR() << "Error: getImgSeq as returned an error..." ;
-			
-			DEB_TRACE() << "Freeing every image pointer of the images array";
-			for(int i=0 ; i < m_nb_frames ; i++)
-				delete[] pSeqImage[i];
-			
-			DEB_TRACE() << "Freeing images array";
-			delete[] pSeqImage;			
-
-			m_status = XpadCamera::Fault;
-			throw LIMA_HW_EXC(Error, "getImgSeq as returned an error...");
-
-			
-		}
-
-		m_status = XpadCamera::Readout;
+			break;
 		
-		DEB_TRACE() 	<< "\n#######################"
-				<< "\nall images are acquired"
-				<< "\n#######################" ;
-		
-		//- ATTENTION :
-		//- Xpix acquires a buffer sized according to m_module_number.
-		//- Displayed/Lima image will be ALWAYS 560*960, even if some modules are not availables ! 
-		//- Image zone where a module is not available will be set to "zero"
-		 
-		//XPIX LIB buffer						//Device requested buffer
-		//--------------						//--------------
-		//line 1 	mod1						//line 1 	mod1
-		//line 1 	mod2						//line 2 	mod1
-		//line 1 	mod3						//line 3 	mod1
-		//...									//...
-		//line 1	mod8						//line 120	mod1
-		//--------------						//--------------
-		//line 2 	mod1						//line 1 	mod2
-		//line 2 	mod2						//line 2 	mod2
-		//line 2 	mod3						//line 3 	mod2
-		//...									//...
-		//line 2	mod4						//line 120	mod2
-		//--------------						//--------------
-		//...									//...
-		//--------------						//--------------
-		//line 120 	mod1						//line 1 	mod8
-		//line 120 	mod2						//line 2 	mod8
-		//line 120 	mod3						//line 3 	mod8
-		//...									//...
-		//line 120	mod8						//line 120	mod8
-		
-		int	i=0, j=0, k=0;
 
-		//- clean each image and call new frame for each frame
-		StdBufferCbMgr& buffer_mgr = m_buffer_cb_mgr;
-		DEB_TRACE() <<"Cleanning each acquired image and publish it through newFrameReady()";
-		for(i=0; i<m_nb_frames; i++)
-		{
-			pOneImage = pSeqImage[i];
+//-----------------------------------------------------    
+	  case XPAD_DLL_START_FAST_ASYNC_MSG:	
+		  {
+			  DEB_TRACE() <<"XpadCamera::->XPAD_DLL_START_FAST_ASYNC_MSG";
 
-			int buffer_nb, concat_frame_nb;
-			buffer_mgr.setStartTimestamp(Timestamp::now());
-			buffer_mgr.acqFrameNb2BufferNb(i, buffer_nb, concat_frame_nb);
+			  //- A mettre dans le prepareAcq?
+			  // allocate multiple buffers
+			  DEB_TRACE() <<"allocating images array (" << m_nb_frames << " images)";
+			  pSeqImage = new uint16_t* [ m_nb_frames ];
 
-			uint16_t *ptr = (uint16_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
-			//clean the ptr with zero memory, pixels of a not available module are set to "0" 
-			memset((uint16_t *)ptr,0,m_image_size.getWidth() * m_image_size.getHeight() * 2);
-			
-			//iterate on all lines of all modules returned by xpix API 
-			for(j = 0; j < 120 * m_module_number; j++) 
-			{
-				uint16_t	OneLine[6+80*m_chip_number];
-				
-				//copy entire line with its header and footer
-				for(k = 0; k < (6+80*m_chip_number); k++)
-					OneLine[k] = pOneImage[j*(6+80*m_chip_number)+k];
-				
-				//compute "offset line" where to copy OneLine[] in the *ptr, to ensure that the lines are copied in order of modules
-				int offset = ((120*(OneLine[1]-1))+(OneLine[4]-1)); 
-				
-				//copy cleaned line in the lima buffer
-				for(k = 0; k < (80*m_chip_number); k++)
-					ptr[(offset*80*m_chip_number)+k] = OneLine[5+k];
-			}
-			
-			DEB_TRACE() << "image# " << i <<" cleaned" ;
-			HwFrameInfoType frame_info;
-			frame_info.acq_frame_nb = i;
-			//- raise the image to lima
-			buffer_mgr.newFrameReady(frame_info);
-		}
+			  DEB_TRACE() <<"allocating every image pointer of the images array (1 image full size = "<< m_full_image_size_in_bytes << ") ";
+			  for( int i=0 ; i < m_nb_frames ; i++ )
+				  pSeqImage[i] = new uint16_t[ m_full_image_size_in_bytes / 2 ];
 
-		DEB_TRACE() <<"Freeing every image pointer of the images array";
-		for(i=0 ; i < m_nb_frames ; i++)
-			delete[] pSeqImage[i];
-		DEB_TRACE() <<"Freeing images array";
-		delete[] pSeqImage;
-		m_status = XpadCamera::Ready;
-		DEB_TRACE() <<"m_status is Ready";
-      }
-      break;
-    }
+			  m_status = XpadCamera::Exposure;
+
+			  //- Start the img sequence
+			  DEB_TRACE() <<"start acquiring a sequence of images";	
+			  cout << " ============================================== " << endl;
+			  cout << "Parametres pour getImgSeq: "<< endl;
+			  cout << "m_pixel_depth 	= "<< m_pixel_depth << endl;
+			  cout << "m_modules_mask = "<< m_modules_mask << endl;
+			  cout << "m_chip_number 	= "<< m_chip_number << endl;
+			  cout << "m_trigger_type = "<< m_trigger_type << endl;
+			  cout << "m_exp_time 	= "<< m_exp_time << endl;
+			  cout << "m_time_unit 	= "<< m_time_unit << endl;
+			  cout << "m_nb_frames 	= "<< m_nb_frames << endl;
+
+
+			  //- Start the acquisition in Async mode
+			  if ( xpci_getImgSeqAs(	m_pixel_depth, 
+				  m_modules_mask,
+				  m_chip_number,
+				  NULL, //- callback fct not used
+				  10000,//FL: set 10 sec global timeout ??
+				  m_trigger_type,
+				  m_exp_time,
+				  m_time_unit,
+				  m_nb_frames,
+				  (void**)pSeqImage,
+				  8000,
+				  NULL) //- user Parameter not used
+				  == -1)
+
+			  {
+				  DEB_ERROR() << "Error: getImgSeq as returned an error..." ;
+
+				  DEB_TRACE() << "Freeing every image pointer of the images array";
+				  for(int i=0 ; i < m_nb_frames ; i++)
+					  delete[] pSeqImage[i];
+
+				  DEB_TRACE() << "Freeing images array";
+				  delete[] pSeqImage;			
+
+				  m_status = XpadCamera::Fault;
+				  throw LIMA_HW_EXC(Error, "getImgSeq as returned an error...");
+
+
+			  }
+
+			  m_status = XpadCamera::Readout;
+
+			  int nb_images_aquired_before = 0;
+			  int nb_images_acquired = 0;
+			  int current_treated_image = 0;
+
+			  //- While acquisition is running
+			  while(xpci_asyncReadStatus() || current_treated_image < m_nb_frames)
+			  {
+				  //- for debug
+				  //yat::ThreadingUtilities::sleep(0,50000000); //50 ms
+
+				  DEB_TRACE() << "----------------------------";
+				  DEB_TRACE() << "Nb images treated			= " << current_treated_image;
+
+				  nb_images_acquired = xpci_getGotImages();
+				  DEB_TRACE() << "Nb images acquired			= " << nb_images_acquired;
+				  DEB_TRACE() << "Nb images acquired before		= " << nb_images_aquired_before;
+
+				  //- ATTENTION :
+				  //- Xpix acquires a buffer sized according to m_module_number.
+				  //- Displayed/Lima image will be ALWAYS 560*960, even if some modules are not availables ! 
+				  //- Image zone where a module is not available will be set to "zero"
+
+				  //XPIX LIB buffer						//Device requested buffer
+				  //--------------						//--------------
+				  //line 1 	mod1						//line 1 	mod1
+				  //line 1 	mod2						//line 2 	mod1
+				  //line 1 	mod3						//line 3 	mod1
+				  //...									//...
+				  //line 1	mod8						//line 120	mod1
+				  //--------------						//--------------
+				  //line 2 	mod1						//line 1 	mod2
+				  //line 2 	mod2						//line 2 	mod2
+				  //line 2 	mod3						//line 3 	mod2
+				  //...									//...
+				  //line 2	mod4						//line 120	mod2
+				  //--------------						//--------------
+				  //...									//...
+				  //--------------						//--------------
+				  //line 120 	mod1						//line 1 	mod8
+				  //line 120 	mod2						//line 2 	mod8
+				  //line 120 	mod3						//line 3 	mod8
+				  //...									//...
+				  //line 120	mod8						//line 120	mod8
+
+				  int	i=0, j=0, k=0;
+				  //- clean each image and call new frame for each frame
+				  StdBufferCbMgr& buffer_mgr = m_buffer_cb_mgr;
+				  DEB_TRACE() <<"Cleanning each acquired image and publish it through newFrameReady ...";
+				  for(i = nb_images_aquired_before; i<nb_images_acquired; i++)
+				  {
+					  if(nb_images_acquired != nb_images_aquired_before)
+						  nb_images_aquired_before = nb_images_acquired;
+
+					  current_treated_image++;
+
+					  pOneImage = pSeqImage[i];
+
+					  int buffer_nb, concat_frame_nb;
+					  buffer_mgr.setStartTimestamp(Timestamp::now());
+
+					  buffer_mgr.acqFrameNb2BufferNb(i, buffer_nb, concat_frame_nb);
+
+
+					  uint16_t *ptr = (uint16_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
+
+					  //clean the ptr with zero memory, pixels of a not available module are set to "0" 
+					  memset((uint16_t *)ptr,0,m_image_size.getWidth() * m_image_size.getHeight() * 2);
+					  DEB_TRACE() << "---- Niveau ------- 5 ---- ";
+
+					  //iterate on all lines of all modules returned by xpix API 
+					  for(j = 0; j < 120 * m_module_number; j++) 
+					  {
+						  //DEB_TRACE() << "---- Niveau ------- 5.1 ---- ";
+						  uint16_t	OneLine[6+80*m_chip_number];
+
+						  //copy entire line with its header and footer
+						  //DEB_TRACE() << "---- Niveau ------- 5.2 ---- ";
+						  for(k = 0; k < (6+80*m_chip_number); k++)
+							  OneLine[k] = pOneImage[j*(6+80*m_chip_number)+k];
+
+						  //compute "offset line" where to copy OneLine[] in the *ptr, to ensure that the lines are copied in order of modules
+						  //DEB_TRACE() << "---- Niveau ------- 5.3 ---- ";
+						  int offset = ((120*(OneLine[1]-1))+(OneLine[4]-1)); 
+
+						  //copy cleaned line in the lima buffer
+						  //DEB_TRACE() << "---- Niveau ------- 5.4 ---- ";
+						  for(k = 0; k < (80*m_chip_number); k++)
+							  ptr[(offset*80*m_chip_number)+k] = OneLine[5+k];
+					  }
+					  //DEB_TRACE() << "---- Niveau ------- 6 ---- ";
+
+					  DEB_TRACE() << "image# " << i <<" cleaned" ;
+					  HwFrameInfoType frame_info;
+					  //DEB_TRACE() << "---- Niveau ------- 7 ---- ";
+					  frame_info.acq_frame_nb = i;
+					  //- raise the image to lima
+					  buffer_mgr.newFrameReady(frame_info);
+					  //DEB_TRACE() << "---- Niveau ------- 8 ---- ";
+				  }
+			  }
+
+			  DEB_TRACE() <<"Freeing every image pointer of the images array";
+			  for(int j=0 ; j < m_nb_frames ; j++)
+				  delete[] pSeqImage[j];
+			  DEB_TRACE() <<"Freeing images array";
+			  delete[] pSeqImage;
+			  m_status = XpadCamera::Ready;
+			  DEB_TRACE() <<"m_status is Ready";
+		  }
+		  break;
+	}
   }
   catch( yat::Exception& ex )
   {
-      DEB_ERROR() << "Error : " << ex.errors[0].desc;
-    throw;
+	  DEB_ERROR() << "Error : " << ex.errors[0].desc;
+	  throw;
   }
 }
+
+//-----------------------------------------------------
+//  callback fct from Xpix
+//-----------------------------------------------------
+/*int XpadCamera::asyncCB(int ret, void *userData)
+{
+printf("\tASYNC: callBack read returned status was %d\n",ret);
+return 0;
+}*/
 
 //-----------------------------------------------------
 //
@@ -770,9 +958,9 @@ void XpadCamera::setAllConfigG(const vector<long>& allConfigG)
 //
 //-----------------------------------------------------
 void XpadCamera::setFParameters(unsigned deadtime, unsigned init,
-			unsigned shutter, unsigned ovf,    unsigned mode,
-			unsigned n,       unsigned p,
-			unsigned GP1,     unsigned GP2,    unsigned GP3,      unsigned GP4)
+								unsigned shutter, unsigned ovf,    unsigned mode,
+								unsigned n,       unsigned p,
+								unsigned GP1,     unsigned GP2,    unsigned GP3,      unsigned GP4)
 {
 
 	DEB_MEMBER_FUNCT();
@@ -818,8 +1006,8 @@ void XpadCamera::loadFlatConfig(unsigned flat_value)
 	{
 		throw LIMA_HW_EXC(Error, "Error in loadFlatConfig!");
 	}
-	
-	
+
+
 }
 
 //-----------------------------------------------------
@@ -830,18 +1018,18 @@ void XpadCamera::loadAllConfigG()
 	DEB_MEMBER_FUNCT();
 
 	if(xpci_modLoadAllConfigG(m_modules_mask,	m_chip_number, 
-												m_all_config_g[0],//- CMOS_TP
-												m_all_config_g[1],//- AMP_TP, 
-												m_all_config_g[2],//- ITHH, 
-												m_all_config_g[3],//- VADJ, 
-												m_all_config_g[4],//- VREF, 
-												m_all_config_g[5],//- IMFP, 
-												m_all_config_g[6],//- IOTA, 
-												m_all_config_g[7],//- IPRE, 
-												m_all_config_g[8],//- ITHL, 
-												m_all_config_g[9],//- ITUNE, 
-												m_all_config_g[10]//- IBUFFER
-												) == 0)
+		m_all_config_g[0],//- CMOS_TP
+		m_all_config_g[1],//- AMP_TP, 
+		m_all_config_g[2],//- ITHH, 
+		m_all_config_g[3],//- VADJ, 
+		m_all_config_g[4],//- VREF, 
+		m_all_config_g[5],//- IMFP, 
+		m_all_config_g[6],//- IOTA, 
+		m_all_config_g[7],//- IPRE, 
+		m_all_config_g[8],//- ITHL, 
+		m_all_config_g[9],//- ITUNE, 
+		m_all_config_g[10]//- IBUFFER
+	) == 0)
 	{
 		DEB_TRACE() << "loadAllConfigG -> OK" ;
 	}
@@ -849,7 +1037,7 @@ void XpadCamera::loadAllConfigG()
 	{
 		throw LIMA_HW_EXC(Error, "Error in loadAllConfigG!");
 	}
-	
+
 }
 
 //-----------------------------------------------------
@@ -867,7 +1055,7 @@ void XpadCamera::loadConfigG(const vector<unsigned long>& reg_and_value)
 	{
 		throw LIMA_HW_EXC(Error, "Error in loadConfigG!");
 	}
-	
+
 }
 
 //-----------------------------------------------------
@@ -885,7 +1073,7 @@ void XpadCamera::loadAutoTest(unsigned known_value)
 	{
 		throw LIMA_HW_EXC(Error, "Error in loadAutoTest!");
 	}
-	
+
 }
 
 //-----------------------------------------------------
@@ -897,48 +1085,48 @@ vector<uint16_t> XpadCamera::getDacl()
 
 	/*size_t image_size_in_bytes = ((80 * m_chip_number) * 2 + 6*2)  * 120 * m_module_number;
 	pOneImage = new uint16_t[ image_size_in_bytes / 2 ];
-	
+
 	if(xpci_getModConfig(m_modules_mask, m_chip_number,pOneImage)==0)
 	{
-		DEB_TRACE() << "getDacl -> OK" ;
-		DEB_TRACE() << "Cleanning DACL image and getting DACL values..." ;
+	DEB_TRACE() << "getDacl -> OK" ;
+	DEB_TRACE() << "Cleanning DACL image and getting DACL values..." ;
 
-		//iterate on all lines of all modules returned by xpix API 
-		vector<uint16_t> clean_image;
-		int k = 0;
-		uint16_t temp = 0;
-		for(int j = 0; j < 120 * m_module_number; j++) 
-		{
-			uint16_t	OneLine[6+80*m_chip_number];
-			
-			//copy entire line with its header and footer
-			for(k = 0; k < (6+80*m_chip_number); k++)
-				OneLine[k] = pOneImage[j*(6+80*m_chip_number)+k];
-			
-			//compute "offset line" where to copy OneLine[] in the *clean_image, to ensure that the lines are copied in order of modules
-			int offset = ((120*(OneLine[1]-1))+(OneLine[4]-1)); 
-			
-			//copy cleaned line in the lima buffer
-			for(k = 0; k < (80*m_chip_number); k++)
-				clean_image[(offset*80*m_chip_number)+k] = OneLine[5+k];
-			
-			//get the DACL values: bits 3 to 8 (ie remove 3 first bits)
-			for(k = 0; k < (80*m_chip_number); k++)
-			{
-				temp = clean_image[k];
-				clean_image[k] = ((temp & 0x1ff)>>3);
-			}
-		}
-		delete[] pOneImage; 
-		DEB_TRACE() << "Image cleaned and DACL values getted" ;
+	//iterate on all lines of all modules returned by xpix API 
+	vector<uint16_t> clean_image;
+	int k = 0;
+	uint16_t temp = 0;
+	for(int j = 0; j < 120 * m_module_number; j++) 
+	{
+	uint16_t	OneLine[6+80*m_chip_number];
+
+	//copy entire line with its header and footer
+	for(k = 0; k < (6+80*m_chip_number); k++)
+	OneLine[k] = pOneImage[j*(6+80*m_chip_number)+k];
+
+	//compute "offset line" where to copy OneLine[] in the *clean_image, to ensure that the lines are copied in order of modules
+	int offset = ((120*(OneLine[1]-1))+(OneLine[4]-1)); 
+
+	//copy cleaned line in the lima buffer
+	for(k = 0; k < (80*m_chip_number); k++)
+	clean_image[(offset*80*m_chip_number)+k] = OneLine[5+k];
+
+	//get the DACL values: bits 3 to 8 (ie remove 3 first bits)
+	for(k = 0; k < (80*m_chip_number); k++)
+	{
+	temp = clean_image[k];
+	clean_image[k] = ((temp & 0x1ff)>>3);
+	}
+	}
+	delete[] pOneImage; 
+	DEB_TRACE() << "Image cleaned and DACL values getted" ;
 	}
 	else
 	{
-		throw LIMA_HW_EXC(Error, "Error in getDacl!");
+	throw LIMA_HW_EXC(Error, "Error in getDacl!");
 	}
 
 	return clean_image;*/
-	
+
 }
 
 

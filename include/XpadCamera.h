@@ -12,6 +12,7 @@
 #define kPOST_MSG_TMO       2
 
 const size_t  XPAD_DLL_START_FAST_MSG		=	(yat::FIRST_USER_MSG + 100);
+const size_t  XPAD_DLL_START_FAST_ASYNC_MSG	=	(yat::FIRST_USER_MSG + 101);
 const size_t  XPAD_DLL_START_SLOW_B2_MSG	=	(yat::FIRST_USER_MSG + 103);
 const size_t  XPAD_DLL_START_SLOW_B4_MSG	=	(yat::FIRST_USER_MSG + 104);
 
@@ -120,6 +121,8 @@ namespace lima
 
 		uint16_t**	pSeqImage;
 		uint16_t*	pOneImage;
+
+		yat::Mutex images_locker;
 
 		//---------------------------------
 		//- xpad stuff 
