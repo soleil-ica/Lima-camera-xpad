@@ -104,7 +104,7 @@ class XpadSyncCtrlObj : public HwSyncCtrlObj
     DEB_CLASS_NAMESPC(DebModCamera, "SyncCtrlObj", "Xpad");
 
   public:
-	XpadSyncCtrlObj(XpadCamera& cam, HwBufferCtrlObj& buffer_ctrl);
+	XpadSyncCtrlObj(XpadCamera& cam);
     virtual ~XpadSyncCtrlObj();
 	
 	virtual bool checkTrigMode(TrigMode trig_mode);

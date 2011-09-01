@@ -274,8 +274,8 @@ void XpadBufferCtrlObj::unregisterFrameCallback(HwFrameCallback& frame_cb)
 /*******************************************************************
  * \brief XpadSyncCtrlObj constructor
  *******************************************************************/
-XpadSyncCtrlObj::XpadSyncCtrlObj(XpadCamera& cam, HwBufferCtrlObj& buffer_ctrl)
-	: HwSyncCtrlObj(buffer_ctrl), m_cam(cam)
+XpadSyncCtrlObj::XpadSyncCtrlObj(XpadCamera& cam)
+	: HwSyncCtrlObj(), m_cam(cam)
 {
 }
 
@@ -326,6 +326,9 @@ void XpadSyncCtrlObj::getTrigMode(TrigMode& trig_mode)
 	m_cam.getTrigMode(trig_mode);
 }
 
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
 void XpadSyncCtrlObj::setExpTime(double exp_time)
 {
 	m_cam.setExpTime(exp_time);
@@ -374,7 +377,7 @@ void XpadSyncCtrlObj::getValidRanges(ValidRangesType& valid_ranges)
  *******************************************************************/
 
 XpadInterface::XpadInterface(XpadCamera& cam)
-	: m_cam(cam),m_det_info(cam), m_buffer(cam),m_sync(cam, m_buffer)
+	: m_cam(cam),m_det_info(cam), m_buffer(cam),m_sync(cam)
 {
 	DEB_CONSTRUCTOR();
 
