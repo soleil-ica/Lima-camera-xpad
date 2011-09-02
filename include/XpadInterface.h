@@ -25,9 +25,14 @@
 #include "HwInterface.h"
 #include "XpadCamera.h"
 
+using namespace lima;
+using namespace lima::Xpad;
+using namespace std;
+
 namespace lima
 {
-
+namespace Xpad
+{
 /*******************************************************************
  * \class DetInfoCtrlObj
  * \brief Control object providing Xpad detector info interface
@@ -37,7 +42,7 @@ class XpadDetInfoCtrlObj : public HwDetInfoCtrlObj
 	DEB_CLASS_NAMESPC(DebModCamera, "DetInfoCtrlObj", "Xpad");
 
  public:
-	XpadDetInfoCtrlObj(XpadCamera& cam);
+	XpadDetInfoCtrlObj(Camera& cam);
 	virtual ~XpadDetInfoCtrlObj();
 
 	virtual void getMaxImageSize(Size& max_image_size);
@@ -55,7 +60,7 @@ class XpadDetInfoCtrlObj : public HwDetInfoCtrlObj
 	virtual void unregisterMaxImageSizeCallback(HwMaxImageSizeCallback& cb);
 
  private:
-	XpadCamera& m_cam;
+	Camera& m_cam;
 };
 
 
@@ -68,7 +73,7 @@ class XpadBufferCtrlObj : public HwBufferCtrlObj
 	DEB_CLASS_NAMESPC(DebModCamera, "BufferCtrlObj", "Xpad");
 
  public:
-	XpadBufferCtrlObj(XpadCamera& simu);
+	XpadBufferCtrlObj(Camera& simu);
 	virtual ~XpadBufferCtrlObj();
 
 	virtual void setFrameDim(const FrameDim& frame_dim);
@@ -104,7 +109,7 @@ class XpadSyncCtrlObj : public HwSyncCtrlObj
     DEB_CLASS_NAMESPC(DebModCamera, "SyncCtrlObj", "Xpad");
 
   public:
-	XpadSyncCtrlObj(XpadCamera& cam);
+	XpadSyncCtrlObj(Camera& cam);
     virtual ~XpadSyncCtrlObj();
 	
 	virtual bool checkTrigMode(TrigMode trig_mode);
@@ -123,20 +128,20 @@ class XpadSyncCtrlObj : public HwSyncCtrlObj
     virtual void getValidRanges(ValidRangesType& valid_ranges);
 
   private:
-    XpadCamera& m_cam;
+    Camera& m_cam;
 };
 
 /*******************************************************************
  * \class Interface
  * \brief Xpad hardware interface
  *******************************************************************/
-class XpadInterface : public HwInterface
+class Interface : public HwInterface
 {
-	DEB_CLASS_NAMESPC(DebModCamera, "XpadInterface", "Xpad");
+	DEB_CLASS_NAMESPC(DebModCamera, "Interface", "Xpad");
 
  public:
-	XpadInterface(XpadCamera& cam);
-	virtual ~XpadInterface();
+	Interface(Camera& cam);
+	virtual ~Interface();
 
 	//- From HwInterface
 	virtual void 	getCapList(CapList&) const;
@@ -176,13 +181,14 @@ class XpadInterface : public HwInterface
 	
 
  private:
-	XpadCamera&			m_cam;
-	CapList 		m_cap_list;
+	Camera&				m_cam;
+	CapList 			m_cap_list;
 	XpadDetInfoCtrlObj	m_det_info;
 	XpadBufferCtrlObj	m_buffer;
 	XpadSyncCtrlObj		m_sync;
 
 };
+} // namespace xpad
 } // namespace lima
 
 #endif // XPADINTERFACE_H

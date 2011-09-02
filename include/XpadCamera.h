@@ -54,13 +54,15 @@ using namespace std;
 
 namespace lima
 {
+namespace Xpad
+{
 	/*******************************************************************
-	* \class XpadCamera
+	* \class Camera
 	* \brief object controlling the xpad detector via xpix driver
 	*******************************************************************/
-	class XpadCamera : public HwMaxImageSizeCallbackGen, public yat::Task
+	class Camera : public HwMaxImageSizeCallbackGen, public yat::Task
 	{
-		DEB_CLASS_NAMESPC(DebModCamera, "XpadCamera", "Xpad");
+		DEB_CLASS_NAMESPC(DebModCamera, "Camera", "Xpad");
 
 	public:
 
@@ -68,8 +70,8 @@ namespace lima
 			Ready, Exposure, Readout,Latency,Fault
 		};
 
-		XpadCamera();
-		~XpadCamera();
+		Camera();
+		~Camera();
 
 		void start();
 		void stop();
@@ -94,7 +96,7 @@ namespace lima
 		void getExpTime(double& exp_time);
 		
 		//- Status
-		void getStatus(XpadCamera::Status& status);
+		void getStatus(Camera::Status& status);
 	
 		//---------------------------------------------------------------
 		//- XPAD Stuff
@@ -168,13 +170,15 @@ namespace lima
 		unsigned		m_fparameter_GP3;
 		unsigned		m_fparameter_GP4;
 
-		XpadCamera::Status	m_status;
+		Camera::Status	m_status;
 		bool			m_stop_asked;
 		bool			m_video_mode;
 
 
 
 	};
+
+} // namespace xpad
 } // namespace lima
 
 

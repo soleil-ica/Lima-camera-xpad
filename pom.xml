@@ -4,7 +4,7 @@
     <parent>
         <groupId>fr.soleil.lib.Lima</groupId>
         <artifactId>Camera</artifactId>
-        <version>1.0.5</version>
+        <version>1.0.6-SNAPSHOT</version>
     </parent>
 
     <groupId>fr.soleil.lib.Lima.Camera</groupId>
@@ -28,7 +28,7 @@
 				<!--configuration>
                      <cpp>                      
                         <systemIncludePaths>
-                           <systemIncludePath>/home/informatique/ica/langlois/temp_xpix/sw/xpci_lib</systemIncludePath>
+                           <systemIncludePath>/home/experiences/detecteurs/detecteurs/ICA/Xpix_new/xpci_lib</systemIncludePath>
                         </systemIncludePaths>
                      </cpp>
 
@@ -38,7 +38,7 @@
                            <lib>
                               <name>xpci_lib</name>
                               <type>static</type>
-                              <directory>/home/informatique/ica/langlois/temp_xpix/sw/xpci_lib</directory>
+                              <directory>/home/experiences/detecteurs/detecteurs/ICA/Xpix_new/xpci_lib</directory>
                            </lib>
                         </libs>
                      </linker>

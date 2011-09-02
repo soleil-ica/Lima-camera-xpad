@@ -23,13 +23,13 @@
 #include <algorithm>
 
 using namespace lima;
-//using namespace lima::Xpad;
+using namespace lima::Xpad;
 using namespace std;
 
 /*******************************************************************
  * \brief XpadDetInfoCtrlObj constructor
  *******************************************************************/
-XpadDetInfoCtrlObj::XpadDetInfoCtrlObj(XpadCamera& cam):m_cam(cam)
+XpadDetInfoCtrlObj::XpadDetInfoCtrlObj(Camera& cam):m_cam(cam)
 {
     DEB_CONSTRUCTOR();
 }
@@ -138,7 +138,7 @@ void XpadDetInfoCtrlObj::unregisterMaxImageSizeCallback(HwMaxImageSizeCallback& 
 /*******************************************************************
  * \brief XpadBufferCtrlObj constructor
  *******************************************************************/
-XpadBufferCtrlObj::XpadBufferCtrlObj(XpadCamera& cam)
+XpadBufferCtrlObj::XpadBufferCtrlObj(Camera& cam)
 	: m_buffer_mgr(cam.getBufferMgr())
 {
 	DEB_CONSTRUCTOR();
@@ -274,7 +274,7 @@ void XpadBufferCtrlObj::unregisterFrameCallback(HwFrameCallback& frame_cb)
 /*******************************************************************
  * \brief XpadSyncCtrlObj constructor
  *******************************************************************/
-XpadSyncCtrlObj::XpadSyncCtrlObj(XpadCamera& cam)
+XpadSyncCtrlObj::XpadSyncCtrlObj(Camera& cam)
 	: HwSyncCtrlObj(), m_cam(cam)
 {
 }
@@ -376,7 +376,7 @@ void XpadSyncCtrlObj::getValidRanges(ValidRangesType& valid_ranges)
  * \brief Hw Interface constructor
  *******************************************************************/
 
-XpadInterface::XpadInterface(XpadCamera& cam)
+Interface::Interface(Camera& cam)
 	: m_cam(cam),m_det_info(cam), m_buffer(cam),m_sync(cam)
 {
 	DEB_CONSTRUCTOR();
@@ -394,7 +394,7 @@ XpadInterface::XpadInterface(XpadCamera& cam)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-XpadInterface::~XpadInterface()
+Interface::~Interface()
 {
 	DEB_DESTRUCTOR();
 }
@@ -402,7 +402,7 @@ XpadInterface::~XpadInterface()
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadInterface::getCapList(HwInterface::CapList &cap_list) const
+void Interface::getCapList(HwInterface::CapList &cap_list) const
 {
 	DEB_MEMBER_FUNCT();
 	cap_list = m_cap_list;
@@ -411,7 +411,7 @@ void XpadInterface::getCapList(HwInterface::CapList &cap_list) const
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadInterface::reset(ResetLevel reset_level)
+void Interface::reset(ResetLevel reset_level)
 {
 	DEB_MEMBER_FUNCT();
 	DEB_PARAM() << DEB_VAR1(reset_level);
@@ -432,7 +432,7 @@ void XpadInterface::reset(ResetLevel reset_level)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadInterface::prepareAcq()
+void Interface::prepareAcq()
 {
 	DEB_MEMBER_FUNCT();
 }
@@ -440,7 +440,7 @@ void XpadInterface::prepareAcq()
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadInterface::startAcq()
+void Interface::startAcq()
 {
 	DEB_MEMBER_FUNCT();
 	m_cam.start();
@@ -449,7 +449,7 @@ void XpadInterface::startAcq()
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadInterface::stopAcq()
+void Interface::stopAcq()
 {
 	DEB_MEMBER_FUNCT();
 	m_cam.stop();
@@ -458,29 +458,29 @@ void XpadInterface::stopAcq()
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadInterface::getStatus(StatusType& status)
+void Interface::getStatus(StatusType& status)
 {
-	XpadCamera::Status xpad_status = XpadCamera::Ready;
+	Camera::Status xpad_status = Camera::Ready;
 	m_cam.getStatus(xpad_status);
 	switch (xpad_status)
 	{
-		case XpadCamera::Ready:
+		case Camera::Ready:
 			status.acq = AcqReady;
 			status.det = DetIdle;
 			break;
-		case XpadCamera::Exposure:
+		case Camera::Exposure:
 			status.det = DetExposure;
 			status.acq = AcqRunning;
 			break;
-		case XpadCamera::Readout:
+		case Camera::Readout:
 			status.det = DetReadout;
 			status.acq = AcqRunning;
 			break;
-		case XpadCamera::Latency:
+		case Camera::Latency:
 			status.det = DetLatency;
 			status.acq = AcqRunning;
 			break;
-		case XpadCamera::Fault:
+		case Camera::Fault:
 		  	status.det = DetFault;
 		  	status.acq = AcqFault;
 			break;
@@ -491,7 +491,7 @@ void XpadInterface::getStatus(StatusType& status)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-int XpadInterface::getNbHwAcquiredFrames()
+int Interface::getNbHwAcquiredFrames()
 {
 	DEB_MEMBER_FUNCT();
 	int acq_frames;
@@ -502,7 +502,7 @@ int XpadInterface::getNbHwAcquiredFrames()
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadInterface::setFParameters(unsigned deadtime, unsigned init,
+void Interface::setFParameters(unsigned deadtime, unsigned init,
 			unsigned shutter, unsigned ovf,    unsigned mode,
 			unsigned n,       unsigned p,
 			unsigned GP1,     unsigned GP2,    unsigned GP3,      unsigned GP4)
@@ -514,7 +514,7 @@ void XpadInterface::setFParameters(unsigned deadtime, unsigned init,
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadInterface::setAcquisitionType(short acq_type)
+void Interface::setAcquisitionType(short acq_type)
 {
 	DEB_MEMBER_FUNCT();
 	m_cam.setAcquisitionType(acq_type);
@@ -523,7 +523,7 @@ void XpadInterface::setAcquisitionType(short acq_type)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadInterface::loadFlatConfig(unsigned flat_value)
+void Interface::loadFlatConfig(unsigned flat_value)
 {
 	DEB_MEMBER_FUNCT();
 	m_cam.loadFlatConfig(flat_value);
@@ -532,7 +532,7 @@ void XpadInterface::loadFlatConfig(unsigned flat_value)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadInterface::loadAllConfigG()
+void Interface::loadAllConfigG()
 {
 	DEB_MEMBER_FUNCT();
 	m_cam.loadAllConfigG();
@@ -541,7 +541,7 @@ void XpadInterface::loadAllConfigG()
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadInterface::loadConfigG(const vector<unsigned long>& reg_and_value)
+void Interface::loadConfigG(const vector<unsigned long>& reg_and_value)
 {
 	DEB_MEMBER_FUNCT();
 	m_cam.loadConfigG(reg_and_value);

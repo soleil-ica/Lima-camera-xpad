@@ -26,6 +26,7 @@
 #include <math.h>
 
 using namespace lima;
+using namespace lima::Xpad;
 using namespace std;
 
 
@@ -36,7 +37,7 @@ static const int 	BOARDNUM 	= 0;
 //---------------------------
 //- Ctor
 //---------------------------
-XpadCamera::XpadCamera(): 	m_buffer_cb_mgr(m_buffer_alloc_mgr),
+Camera::Camera(): 	m_buffer_cb_mgr(m_buffer_alloc_mgr),
 m_buffer_ctrl_mgr(m_buffer_cb_mgr),
 m_modules_mask(0x00),
 m_chip_number(7),
@@ -46,7 +47,7 @@ m_trigger_type(INTERN_GATE),
 m_nb_frames(1)
 {
 	DEB_CONSTRUCTOR();
-	m_status = XpadCamera::Ready;
+	m_status = Camera::Ready;
 
 	//- Hardcoded temporarly
 	m_time_unit				= MILLISEC_GATE; // 1=MICROSEC_GATE; 2=MILLISEC_GATE; 3=SECONDS_GATE
@@ -129,15 +130,15 @@ m_nb_frames(1)
 //---------------------------
 //- Dtor
 //---------------------------
-XpadCamera::~XpadCamera()
+Camera::~Camera()
 {
 	DEB_DESTRUCTOR();
 }
 
 //---------------------------
-//- XpadCamera::start()
+//- Camera::start()
 //---------------------------
-void XpadCamera::start()
+void Camera::start()
 {
 	DEB_MEMBER_FUNCT();
 
@@ -183,20 +184,20 @@ void XpadCamera::start()
 }
 
 //---------------------------
-//- XpadCamera::stop()
+//- Camera::stop()
 //---------------------------
-void XpadCamera::stop()
+void Camera::stop()
 {
 	DEB_MEMBER_FUNCT();
 
-	m_status = XpadCamera::Ready;
+	m_status = Camera::Ready;
 	m_stop_asked = true;
 }
 
 //-----------------------------------------------------
-//- XpadCamera::getImageSize(Size& size)
+//- Camera::getImageSize(Size& size)
 //-----------------------------------------------------
-void XpadCamera::getImageSize(Size& size)
+void Camera::getImageSize(Size& size)
 {
 	DEB_MEMBER_FUNCT();
 
@@ -204,18 +205,18 @@ void XpadCamera::getImageSize(Size& size)
 }
 
 //-----------------------------------------------------
-//- XpadCamera::getPixelSize(double& size)
+//- Camera::getPixelSize(double& size)
 //-----------------------------------------------------
-void XpadCamera::getPixelSize(double& size)
+void Camera::getPixelSize(double& size)
 {
 	DEB_MEMBER_FUNCT();
 	size = 130; // pixel size is 130 micron
 }
 
 //-----------------------------------------------------
-//- XpadCamera::setPixelDepth(ImageType pixel_depth)
+//- Camera::setPixelDepth(ImageType pixel_depth)
 //-----------------------------------------------------
-void XpadCamera::setPixelDepth(ImageType pixel_depth)
+void Camera::setPixelDepth(ImageType pixel_depth)
 {
 	DEB_MEMBER_FUNCT();
 	switch( pixel_depth )
@@ -235,9 +236,9 @@ void XpadCamera::setPixelDepth(ImageType pixel_depth)
 }
 
 //-----------------------------------------------------
-//- XpadCamera::getPixelDepth(ImageType& pixel_depth)
+//- Camera::getPixelDepth(ImageType& pixel_depth)
 //-----------------------------------------------------
-void XpadCamera::getPixelDepth(ImageType& pixel_depth)
+void Camera::getPixelDepth(ImageType& pixel_depth)
 {
 	DEB_MEMBER_FUNCT();
 	switch( m_pixel_depth )
@@ -253,18 +254,18 @@ void XpadCamera::getPixelDepth(ImageType& pixel_depth)
 }
 
 //-----------------------------------------------------
-//- XpadCamera::getDetectorType(string& type)
+//- Camera::getDetectorType(string& type)
 //-----------------------------------------------------
-void XpadCamera::getDetectorType(string& type)
+void Camera::getDetectorType(string& type)
 {
 	DEB_MEMBER_FUNCT();
 	type = "XPAD";
 }
 
 //-----------------------------------------------------
-//- XpadCamera::getDetectorModel(string& type)
+//- Camera::getDetectorModel(string& type)
 //-----------------------------------------------------
-void XpadCamera::getDetectorModel(string& type)
+void Camera::getDetectorModel(string& type)
 {
 	DEB_MEMBER_FUNCT();
 	type = "PCIe-3.2";	
@@ -273,7 +274,7 @@ void XpadCamera::getDetectorModel(string& type)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadCamera::setMaxImageSizeCallbackActive(bool cb_active)
+void Camera::setMaxImageSizeCallbackActive(bool cb_active)
 {  
 	m_mis_cb_act = cb_active;
 }
@@ -281,7 +282,7 @@ void XpadCamera::setMaxImageSizeCallbackActive(bool cb_active)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-BufferCtrlMgr& XpadCamera::getBufferMgr()
+BufferCtrlMgr& Camera::getBufferMgr()
 {
 	return m_buffer_ctrl_mgr;
 }
@@ -289,7 +290,7 @@ BufferCtrlMgr& XpadCamera::getBufferMgr()
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadCamera::setTrigMode(TrigMode mode)
+void Camera::setTrigMode(TrigMode mode)
 {
 	DEB_MEMBER_FUNCT();
 	DEB_PARAM() << DEB_VAR1(mode);
@@ -315,7 +316,7 @@ void XpadCamera::setTrigMode(TrigMode mode)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadCamera::getTrigMode(TrigMode& mode)
+void Camera::getTrigMode(TrigMode& mode)
 {
 
 	DEB_MEMBER_FUNCT();
@@ -340,7 +341,7 @@ void XpadCamera::getTrigMode(TrigMode& mode)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadCamera::setExpTime(double exp_time_sec)
+void Camera::setExpTime(double exp_time_sec)
 {
 	DEB_MEMBER_FUNCT();
 	DEB_PARAM() << DEB_VAR1(exp_time_sec);
@@ -378,7 +379,7 @@ void XpadCamera::setExpTime(double exp_time_sec)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadCamera::getExpTime(double& exp_time_sec)
+void Camera::getExpTime(double& exp_time_sec)
 {
 	DEB_MEMBER_FUNCT();
 
@@ -406,7 +407,7 @@ void XpadCamera::getExpTime(double& exp_time_sec)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadCamera::setNbFrames(int nb_frames)
+void Camera::setNbFrames(int nb_frames)
 {
 	DEB_MEMBER_FUNCT();
 	DEB_PARAM() << DEB_VAR1(nb_frames);
@@ -425,7 +426,7 @@ void XpadCamera::setNbFrames(int nb_frames)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadCamera::getNbFrames(int& nb_frames)
+void Camera::getNbFrames(int& nb_frames)
 {
 	DEB_MEMBER_FUNCT();
 	nb_frames = m_nb_frames;
@@ -435,7 +436,7 @@ void XpadCamera::getNbFrames(int& nb_frames)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadCamera::getStatus(XpadCamera::Status& status)
+void Camera::getStatus(Camera::Status& status)
 {
 	DEB_MEMBER_FUNCT();
 	status = m_status;
@@ -446,7 +447,7 @@ void XpadCamera::getStatus(XpadCamera::Status& status)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
+void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 {
 	DEB_MEMBER_FUNCT();
 	try
@@ -456,34 +457,34 @@ void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
 			//-----------------------------------------------------	
 		case yat::TASK_INIT:
 			{
-				DEB_TRACE() <<"XpadCamera::->TASK_INIT";          
+				DEB_TRACE() <<"Camera::->TASK_INIT";          
 			}
 			break;
 			//-----------------------------------------------------    
 		case yat::TASK_EXIT:
 			{
-				DEB_TRACE() <<"XpadCamera::->TASK_EXIT";                
+				DEB_TRACE() <<"Camera::->TASK_EXIT";                
 			}
 			break;
 			//-----------------------------------------------------    
 		case yat::TASK_TIMEOUT:
 			{
-				DEB_TRACE() <<"XpadCamera::->TASK_TIMEOUT";       
+				DEB_TRACE() <<"Camera::->TASK_TIMEOUT";       
 			}
 			break;
 			//-----------------------------------------------------    
 		case XPAD_DLL_START_SLOW_B2_MSG:
 			{
-				DEB_TRACE() <<"XpadCamera::->XPAD_DLL_START_SLOW_B2_MSG";       
+				DEB_TRACE() <<"Camera::->XPAD_DLL_START_SLOW_B2_MSG";       
 
-				m_status = XpadCamera::Exposure;
+				m_status = Camera::Exposure;
 
 				for( int i=0 ; i < m_nb_frames ; i++ )
 				{
 					if (m_stop_asked == true)
 					{
 						DEB_TRACE() <<"Stop asked: exit without allocating new images..." ;
-						m_status = XpadCamera::Ready;
+						m_status = Camera::Ready;
 						return;
 					}
 
@@ -502,7 +503,7 @@ void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
 						DEB_ERROR()<< "Error: readOneImage as returned an error..." ;
 					}
 
-					m_status = XpadCamera::Readout;
+					m_status = Camera::Readout;
 
 					DEB_TRACE() <<"Image# "<< i << " acquired" ;
 
@@ -546,15 +547,15 @@ void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
 					delete[] pOneImage;
 				}
 
-				m_status = XpadCamera::Ready;
+				m_status = Camera::Ready;
 			}
 			break;
 			//-----------------------------------------------------    
 		case XPAD_DLL_START_SLOW_B4_MSG:
 			{
-				DEB_TRACE() <<"XpadCamera::->XPAD_DLL_START_SLOW_B4_MSG";       
+				DEB_TRACE() <<"Camera::->XPAD_DLL_START_SLOW_B4_MSG";       
 
-				m_status = XpadCamera::Exposure;
+				m_status = Camera::Exposure;
 
 				for( int i=0 ; i < m_nb_frames ;  )
 				{
@@ -566,7 +567,7 @@ void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
 					if (m_stop_asked == true)
 					{
 						DEB_TRACE() <<"Stop asked: exit without allocating new images..." ;
-						m_status = XpadCamera::Ready;
+						m_status = Camera::Ready;
 						return;
 					}
 
@@ -585,7 +586,7 @@ void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
 						DEB_ERROR()<< "Error: readOneImage as returned an error..." ;
 					}
 
-					m_status = XpadCamera::Readout;
+					m_status = Camera::Readout;
 
 					DEB_TRACE() <<"Image# "<< i << " acquired" ;
 
@@ -636,14 +637,14 @@ void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
 					i++;
 				}
 
-				m_status = XpadCamera::Ready;
+				m_status = Camera::Ready;
 			}
 			break;
 
 			//-----------------------------------------------------    
 		case XPAD_DLL_START_FAST_MSG:	
 			{
-				DEB_TRACE() <<"XpadCamera::->XPAD_DLL_START_FAST_MSG";
+				DEB_TRACE() <<"Camera::->XPAD_DLL_START_FAST_MSG";
 
 				//- A mettre dans le prepareAcq?
 				// allocate multiple buffers
@@ -654,7 +655,7 @@ void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				for( int i=0 ; i < m_nb_frames ; i++ )
 					pSeqImage[i] = new uint16_t[ m_full_image_size_in_bytes / 2 ];
 
-				m_status = XpadCamera::Exposure;
+				m_status = Camera::Exposure;
 
 				//- Start the img sequence
 				DEB_TRACE() <<"start acquiring a sequence of images";	
@@ -687,13 +688,13 @@ void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
 					DEB_TRACE() << "Freeing images array";
 					delete[] pSeqImage;			
 
-					m_status = XpadCamera::Fault;
+					m_status = Camera::Fault;
 					throw LIMA_HW_EXC(Error, "getImgSeq as returned an error...");
 
 
 				}
 
-				m_status = XpadCamera::Readout;
+				m_status = Camera::Readout;
 
 				DEB_TRACE() 	<< "\n#######################"
 					<< "\nall images are acquired"
@@ -772,7 +773,7 @@ void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
 					delete[] pSeqImage[i];
 				DEB_TRACE() <<"Freeing images array";
 				delete[] pSeqImage;
-				m_status = XpadCamera::Ready;
+				m_status = Camera::Ready;
 				DEB_TRACE() <<"m_status is Ready";
 			}
 			break;
@@ -781,7 +782,7 @@ void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
 //-----------------------------------------------------    
 	  case XPAD_DLL_START_FAST_ASYNC_MSG:	
 		  {
-			  DEB_TRACE() <<"XpadCamera::->XPAD_DLL_START_FAST_ASYNC_MSG";
+			  DEB_TRACE() <<"Camera::->XPAD_DLL_START_FAST_ASYNC_MSG";
 
 			  //- A mettre dans le prepareAcq?
 			  // allocate multiple buffers
@@ -792,7 +793,7 @@ void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
 			  for( int i=0 ; i < m_nb_frames ; i++ )
 				  pSeqImage[i] = new uint16_t[ m_full_image_size_in_bytes / 2 ];
 
-			  m_status = XpadCamera::Exposure;
+			  m_status = Camera::Exposure;
 
 			  //- Start the img sequence
 			  DEB_TRACE() <<"start acquiring a sequence of images";	
@@ -832,13 +833,13 @@ void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				  DEB_TRACE() << "Freeing images array";
 				  delete[] pSeqImage;			
 
-				  m_status = XpadCamera::Fault;
+				  m_status = Camera::Fault;
 				  throw LIMA_HW_EXC(Error, "getImgSeq as returned an error...");
 
 
 			  }
 
-			  m_status = XpadCamera::Readout;
+			  m_status = Camera::Readout;
 
 			  int nb_images_aquired_before = 0;
 			  int nb_images_acquired = 0;
@@ -946,7 +947,7 @@ void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				  delete[] pSeqImage[j];
 			  DEB_TRACE() <<"Freeing images array";
 			  delete[] pSeqImage;
-			  m_status = XpadCamera::Ready;
+			  m_status = Camera::Ready;
 			  DEB_TRACE() <<"m_status is Ready";
 		  }
 		  break;
@@ -962,7 +963,7 @@ void XpadCamera::handle_message( yat::Message& msg )  throw( yat::Exception )
 //-----------------------------------------------------
 //  callback fct from Xpix
 //-----------------------------------------------------
-/*int XpadCamera::asyncCB(int ret, void *userData)
+/*int Camera::asyncCB(int ret, void *userData)
 {
 printf("\tASYNC: callBack read returned status was %d\n",ret);
 return 0;
@@ -971,14 +972,14 @@ return 0;
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadCamera::setAllConfigG(const vector<long>& allConfigG)
+void Camera::setAllConfigG(const vector<long>& allConfigG)
 {
 	m_all_config_g = allConfigG;
 }
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadCamera::setFParameters(unsigned deadtime, unsigned init,
+void Camera::setFParameters(unsigned deadtime, unsigned init,
 								unsigned shutter, unsigned ovf,    unsigned mode,
 								unsigned n,       unsigned p,
 								unsigned GP1,     unsigned GP2,    unsigned GP3,      unsigned GP4)
@@ -1003,7 +1004,7 @@ void XpadCamera::setFParameters(unsigned deadtime, unsigned init,
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadCamera::setAcquisitionType(short acq_type)
+void Camera::setAcquisitionType(short acq_type)
 {
 	DEB_MEMBER_FUNCT();
 	m_acquisition_type = acq_type;
@@ -1015,7 +1016,7 @@ void XpadCamera::setAcquisitionType(short acq_type)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadCamera::loadFlatConfig(unsigned flat_value)
+void Camera::loadFlatConfig(unsigned flat_value)
 {
 	DEB_MEMBER_FUNCT();
 
@@ -1034,7 +1035,7 @@ void XpadCamera::loadFlatConfig(unsigned flat_value)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadCamera::loadAllConfigG()
+void Camera::loadAllConfigG()
 {
 	DEB_MEMBER_FUNCT();
 
@@ -1064,7 +1065,7 @@ void XpadCamera::loadAllConfigG()
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadCamera::loadConfigG(const vector<unsigned long>& reg_and_value)
+void Camera::loadConfigG(const vector<unsigned long>& reg_and_value)
 {
 	DEB_MEMBER_FUNCT();
 
@@ -1082,7 +1083,7 @@ void XpadCamera::loadConfigG(const vector<unsigned long>& reg_and_value)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadCamera::loadAutoTest(unsigned known_value)
+void Camera::loadAutoTest(unsigned known_value)
 {
 	DEB_MEMBER_FUNCT();
 
@@ -1100,7 +1101,7 @@ void XpadCamera::loadAutoTest(unsigned known_value)
 //-----------------------------------------------------
 //		Get the DACL values
 //-----------------------------------------------------
-vector<uint16_t> XpadCamera::getDacl()
+vector<uint16_t> Camera::getDacl()
 {
 	DEB_MEMBER_FUNCT();
 
@@ -1154,7 +1155,7 @@ vector<uint16_t> XpadCamera::getDacl()
 //-----------------------------------------------------
 //		Get the DACL values
 //-----------------------------------------------------
-void XpadCamera::saveAndloadDacl(uint16_t* all_dacls)
+void Camera::saveAndloadDacl(uint16_t* all_dacls)
 {
 }
 
