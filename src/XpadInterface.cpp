@@ -27,9 +27,9 @@ using namespace lima::Xpad;
 using namespace std;
 
 /*******************************************************************
- * \brief XpadDetInfoCtrlObj constructor
+ * \brief DetInfoCtrlObj constructor
  *******************************************************************/
-XpadDetInfoCtrlObj::XpadDetInfoCtrlObj(Camera& cam):m_cam(cam)
+DetInfoCtrlObj::DetInfoCtrlObj(Camera& cam):m_cam(cam)
 {
     DEB_CONSTRUCTOR();
 }
@@ -37,7 +37,7 @@ XpadDetInfoCtrlObj::XpadDetInfoCtrlObj(Camera& cam):m_cam(cam)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-XpadDetInfoCtrlObj::~XpadDetInfoCtrlObj()
+DetInfoCtrlObj::~DetInfoCtrlObj()
 {
     DEB_DESTRUCTOR();
 }
@@ -45,7 +45,7 @@ XpadDetInfoCtrlObj::~XpadDetInfoCtrlObj()
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadDetInfoCtrlObj::getMaxImageSize(Size& size)
+void DetInfoCtrlObj::getMaxImageSize(Size& size)
 {
     DEB_MEMBER_FUNCT();
     m_cam.getImageSize(size);
@@ -54,7 +54,7 @@ void XpadDetInfoCtrlObj::getMaxImageSize(Size& size)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadDetInfoCtrlObj::getDetectorImageSize(Size& size)
+void DetInfoCtrlObj::getDetectorImageSize(Size& size)
 {
     DEB_MEMBER_FUNCT();
     m_cam.getImageSize(size);
@@ -63,7 +63,7 @@ void XpadDetInfoCtrlObj::getDetectorImageSize(Size& size)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadDetInfoCtrlObj::getDefImageType(ImageType& image_type)
+void DetInfoCtrlObj::getDefImageType(ImageType& image_type)
 {
     DEB_MEMBER_FUNCT();
 
@@ -73,7 +73,7 @@ void XpadDetInfoCtrlObj::getDefImageType(ImageType& image_type)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadDetInfoCtrlObj::getCurrImageType(ImageType& image_type)
+void DetInfoCtrlObj::getCurrImageType(ImageType& image_type)
 {
     DEB_MEMBER_FUNCT();
 	m_cam.getPixelDepth(image_type);
@@ -82,7 +82,7 @@ void XpadDetInfoCtrlObj::getCurrImageType(ImageType& image_type)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadDetInfoCtrlObj::setCurrImageType(ImageType image_type)
+void DetInfoCtrlObj::setCurrImageType(ImageType image_type)
 {
     DEB_MEMBER_FUNCT();
     m_cam.setPixelDepth(image_type);
@@ -91,7 +91,7 @@ void XpadDetInfoCtrlObj::setCurrImageType(ImageType image_type)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadDetInfoCtrlObj::getPixelSize(double& size)
+void DetInfoCtrlObj::getPixelSize(double& size)
 {
     DEB_MEMBER_FUNCT();
     m_cam.getPixelSize(size);
@@ -100,7 +100,7 @@ void XpadDetInfoCtrlObj::getPixelSize(double& size)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadDetInfoCtrlObj::getDetectorType(std::string& type)
+void DetInfoCtrlObj::getDetectorType(std::string& type)
 {
     DEB_MEMBER_FUNCT();
     m_cam.getDetectorType(type);
@@ -109,7 +109,7 @@ void XpadDetInfoCtrlObj::getDetectorType(std::string& type)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadDetInfoCtrlObj::getDetectorModel(std::string& model)
+void DetInfoCtrlObj::getDetectorModel(std::string& model)
 {
     DEB_MEMBER_FUNCT();
     m_cam.getDetectorModel(model);
@@ -118,7 +118,7 @@ void XpadDetInfoCtrlObj::getDetectorModel(std::string& model)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadDetInfoCtrlObj::registerMaxImageSizeCallback(HwMaxImageSizeCallback& cb)
+void DetInfoCtrlObj::registerMaxImageSizeCallback(HwMaxImageSizeCallback& cb)
 {
     DEB_MEMBER_FUNCT();
     m_cam.registerMaxImageSizeCallback(cb);
@@ -127,7 +127,7 @@ void XpadDetInfoCtrlObj::registerMaxImageSizeCallback(HwMaxImageSizeCallback& cb
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadDetInfoCtrlObj::unregisterMaxImageSizeCallback(HwMaxImageSizeCallback& cb)
+void DetInfoCtrlObj::unregisterMaxImageSizeCallback(HwMaxImageSizeCallback& cb)
 {
     DEB_MEMBER_FUNCT();
     m_cam.unregisterMaxImageSizeCallback(cb);
@@ -136,9 +136,9 @@ void XpadDetInfoCtrlObj::unregisterMaxImageSizeCallback(HwMaxImageSizeCallback& 
 
 
 /*******************************************************************
- * \brief XpadBufferCtrlObj constructor
+ * \brief BufferCtrlObj constructor
  *******************************************************************/
-XpadBufferCtrlObj::XpadBufferCtrlObj(Camera& cam)
+BufferCtrlObj::BufferCtrlObj(Camera& cam)
 	: m_buffer_mgr(cam.getBufferMgr())
 {
 	DEB_CONSTRUCTOR();
@@ -147,7 +147,7 @@ XpadBufferCtrlObj::XpadBufferCtrlObj(Camera& cam)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-XpadBufferCtrlObj::~XpadBufferCtrlObj()
+BufferCtrlObj::~BufferCtrlObj()
 {
 	DEB_DESTRUCTOR();
 }
@@ -155,7 +155,7 @@ XpadBufferCtrlObj::~XpadBufferCtrlObj()
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadBufferCtrlObj::setFrameDim(const FrameDim& frame_dim)
+void BufferCtrlObj::setFrameDim(const FrameDim& frame_dim)
 {
 	DEB_MEMBER_FUNCT();
 	m_buffer_mgr.setFrameDim(frame_dim);
@@ -164,7 +164,7 @@ void XpadBufferCtrlObj::setFrameDim(const FrameDim& frame_dim)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadBufferCtrlObj::getFrameDim(FrameDim& frame_dim)
+void BufferCtrlObj::getFrameDim(FrameDim& frame_dim)
 {
 	DEB_MEMBER_FUNCT();
 	m_buffer_mgr.getFrameDim(frame_dim);
@@ -173,7 +173,7 @@ void XpadBufferCtrlObj::getFrameDim(FrameDim& frame_dim)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadBufferCtrlObj::setNbBuffers(int nb_buffers)
+void BufferCtrlObj::setNbBuffers(int nb_buffers)
 {
 	DEB_MEMBER_FUNCT();
 	m_buffer_mgr.setNbBuffers(nb_buffers);
@@ -182,7 +182,7 @@ void XpadBufferCtrlObj::setNbBuffers(int nb_buffers)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadBufferCtrlObj::getNbBuffers(int& nb_buffers)
+void BufferCtrlObj::getNbBuffers(int& nb_buffers)
 {
 	DEB_MEMBER_FUNCT();
 	m_buffer_mgr.getNbBuffers(nb_buffers);
@@ -191,7 +191,7 @@ void XpadBufferCtrlObj::getNbBuffers(int& nb_buffers)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadBufferCtrlObj::setNbConcatFrames(int nb_concat_frames)
+void BufferCtrlObj::setNbConcatFrames(int nb_concat_frames)
 {
 	DEB_MEMBER_FUNCT();
 	m_buffer_mgr.setNbConcatFrames(nb_concat_frames);
@@ -200,7 +200,7 @@ void XpadBufferCtrlObj::setNbConcatFrames(int nb_concat_frames)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadBufferCtrlObj::getNbConcatFrames(int& nb_concat_frames)
+void BufferCtrlObj::getNbConcatFrames(int& nb_concat_frames)
 {
 	DEB_MEMBER_FUNCT();
 	m_buffer_mgr.getNbConcatFrames(nb_concat_frames);
@@ -209,7 +209,7 @@ void XpadBufferCtrlObj::getNbConcatFrames(int& nb_concat_frames)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadBufferCtrlObj::getMaxNbBuffers(int& max_nb_buffers)
+void BufferCtrlObj::getMaxNbBuffers(int& max_nb_buffers)
 {
 	DEB_MEMBER_FUNCT();
 	m_buffer_mgr.getMaxNbBuffers(max_nb_buffers);
@@ -218,7 +218,7 @@ void XpadBufferCtrlObj::getMaxNbBuffers(int& max_nb_buffers)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void *XpadBufferCtrlObj::getBufferPtr(int buffer_nb, int concat_frame_nb)
+void *BufferCtrlObj::getBufferPtr(int buffer_nb, int concat_frame_nb)
 {
 	DEB_MEMBER_FUNCT();
 	return m_buffer_mgr.getBufferPtr(buffer_nb, concat_frame_nb);
@@ -227,7 +227,7 @@ void *XpadBufferCtrlObj::getBufferPtr(int buffer_nb, int concat_frame_nb)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void *XpadBufferCtrlObj::getFramePtr(int acq_frame_nb)
+void *BufferCtrlObj::getFramePtr(int acq_frame_nb)
 {
 	DEB_MEMBER_FUNCT();
 	return m_buffer_mgr.getFramePtr(acq_frame_nb);
@@ -236,7 +236,7 @@ void *XpadBufferCtrlObj::getFramePtr(int acq_frame_nb)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadBufferCtrlObj::getStartTimestamp(Timestamp& start_ts)
+void BufferCtrlObj::getStartTimestamp(Timestamp& start_ts)
 {
 	DEB_MEMBER_FUNCT();
 	m_buffer_mgr.getStartTimestamp(start_ts);
@@ -245,7 +245,7 @@ void XpadBufferCtrlObj::getStartTimestamp(Timestamp& start_ts)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadBufferCtrlObj::getFrameInfo(int acq_frame_nb, HwFrameInfoType& info)
+void BufferCtrlObj::getFrameInfo(int acq_frame_nb, HwFrameInfoType& info)
 {
 	DEB_MEMBER_FUNCT();
 	m_buffer_mgr.getFrameInfo(acq_frame_nb, info);
@@ -254,7 +254,7 @@ void XpadBufferCtrlObj::getFrameInfo(int acq_frame_nb, HwFrameInfoType& info)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadBufferCtrlObj::registerFrameCallback(HwFrameCallback& frame_cb)
+void BufferCtrlObj::registerFrameCallback(HwFrameCallback& frame_cb)
 {
 	DEB_MEMBER_FUNCT();
 	m_buffer_mgr.registerFrameCallback(frame_cb);
@@ -263,7 +263,7 @@ void XpadBufferCtrlObj::registerFrameCallback(HwFrameCallback& frame_cb)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadBufferCtrlObj::unregisterFrameCallback(HwFrameCallback& frame_cb)
+void BufferCtrlObj::unregisterFrameCallback(HwFrameCallback& frame_cb)
 {
 	DEB_MEMBER_FUNCT();
 	m_buffer_mgr.unregisterFrameCallback(frame_cb);
@@ -272,9 +272,9 @@ void XpadBufferCtrlObj::unregisterFrameCallback(HwFrameCallback& frame_cb)
 
 
 /*******************************************************************
- * \brief XpadSyncCtrlObj constructor
+ * \brief SyncCtrlObj constructor
  *******************************************************************/
-XpadSyncCtrlObj::XpadSyncCtrlObj(Camera& cam)
+SyncCtrlObj::SyncCtrlObj(Camera& cam)
 	: HwSyncCtrlObj(), m_cam(cam)
 {
 }
@@ -282,14 +282,14 @@ XpadSyncCtrlObj::XpadSyncCtrlObj(Camera& cam)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-XpadSyncCtrlObj::~XpadSyncCtrlObj()
+SyncCtrlObj::~SyncCtrlObj()
 {
 }
 
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-bool XpadSyncCtrlObj::checkTrigMode(TrigMode trig_mode)
+bool SyncCtrlObj::checkTrigMode(TrigMode trig_mode)
 {
 	bool valid_mode = false;
 	switch (trig_mode)
@@ -309,7 +309,7 @@ bool XpadSyncCtrlObj::checkTrigMode(TrigMode trig_mode)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadSyncCtrlObj::setTrigMode(TrigMode trig_mode)
+void SyncCtrlObj::setTrigMode(TrigMode trig_mode)
 {
 	DEB_MEMBER_FUNCT();    
 	if (!checkTrigMode(trig_mode))
@@ -321,7 +321,7 @@ void XpadSyncCtrlObj::setTrigMode(TrigMode trig_mode)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadSyncCtrlObj::getTrigMode(TrigMode& trig_mode)
+void SyncCtrlObj::getTrigMode(TrigMode& trig_mode)
 {
 	m_cam.getTrigMode(trig_mode);
 }
@@ -329,7 +329,7 @@ void XpadSyncCtrlObj::getTrigMode(TrigMode& trig_mode)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadSyncCtrlObj::setExpTime(double exp_time)
+void SyncCtrlObj::setExpTime(double exp_time)
 {
 	m_cam.setExpTime(exp_time);
 }
@@ -337,7 +337,7 @@ void XpadSyncCtrlObj::setExpTime(double exp_time)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadSyncCtrlObj::getExpTime(double& exp_time)
+void SyncCtrlObj::getExpTime(double& exp_time)
 {
 	m_cam.getExpTime(exp_time);
 }
@@ -345,7 +345,7 @@ void XpadSyncCtrlObj::getExpTime(double& exp_time)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadSyncCtrlObj::setNbHwFrames(int nb_frames)
+void SyncCtrlObj::setNbHwFrames(int nb_frames)
 {
 	m_cam.setNbFrames(nb_frames);
 }
@@ -353,7 +353,7 @@ void XpadSyncCtrlObj::setNbHwFrames(int nb_frames)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadSyncCtrlObj::getNbHwFrames(int& nb_frames)
+void SyncCtrlObj::getNbHwFrames(int& nb_frames)
 {
 	m_cam.getNbFrames(nb_frames);
 }
@@ -361,7 +361,7 @@ void XpadSyncCtrlObj::getNbHwFrames(int& nb_frames)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void XpadSyncCtrlObj::getValidRanges(ValidRangesType& valid_ranges)
+void SyncCtrlObj::getValidRanges(ValidRangesType& valid_ranges)
 {
 	double min_time = 10e-9;;
 	double max_time = 10e6;

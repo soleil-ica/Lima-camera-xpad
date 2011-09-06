@@ -37,13 +37,13 @@ namespace Xpad
  * \class DetInfoCtrlObj
  * \brief Control object providing Xpad detector info interface
  *******************************************************************/
-class XpadDetInfoCtrlObj : public HwDetInfoCtrlObj
+class DetInfoCtrlObj : public HwDetInfoCtrlObj
 {
 	DEB_CLASS_NAMESPC(DebModCamera, "DetInfoCtrlObj", "Xpad");
 
  public:
-	XpadDetInfoCtrlObj(Camera& cam);
-	virtual ~XpadDetInfoCtrlObj();
+	DetInfoCtrlObj(Camera& cam);
+	virtual ~DetInfoCtrlObj();
 
 	virtual void getMaxImageSize(Size& max_image_size);
 	virtual void getDetectorImageSize(Size& det_image_size);
@@ -68,13 +68,13 @@ class XpadDetInfoCtrlObj : public HwDetInfoCtrlObj
  * \class BufferCtrlObj
  * \brief Control object providing Xpad buffering interface
  *******************************************************************/
-class XpadBufferCtrlObj : public HwBufferCtrlObj
+class BufferCtrlObj : public HwBufferCtrlObj
 {
 	DEB_CLASS_NAMESPC(DebModCamera, "BufferCtrlObj", "Xpad");
 
  public:
-	XpadBufferCtrlObj(Camera& simu);
-	virtual ~XpadBufferCtrlObj();
+	BufferCtrlObj(Camera& simu);
+	virtual ~BufferCtrlObj();
 
 	virtual void setFrameDim(const FrameDim& frame_dim);
 	virtual void getFrameDim(      FrameDim& frame_dim);
@@ -104,13 +104,13 @@ class XpadBufferCtrlObj : public HwBufferCtrlObj
  * \class SyncCtrlObj
  * \brief Control object providing Xpad synchronization interface
  *******************************************************************/
-class XpadSyncCtrlObj : public HwSyncCtrlObj
+class SyncCtrlObj : public HwSyncCtrlObj
 {
     DEB_CLASS_NAMESPC(DebModCamera, "SyncCtrlObj", "Xpad");
 
   public:
-	XpadSyncCtrlObj(Camera& cam);
-    virtual ~XpadSyncCtrlObj();
+	SyncCtrlObj(Camera& cam);
+    virtual ~SyncCtrlObj();
 	
 	virtual bool checkTrigMode(TrigMode trig_mode);
     virtual void setTrigMode(TrigMode  trig_mode);
@@ -183,9 +183,9 @@ class Interface : public HwInterface
  private:
 	Camera&				m_cam;
 	CapList 			m_cap_list;
-	XpadDetInfoCtrlObj	m_det_info;
-	XpadBufferCtrlObj	m_buffer;
-	XpadSyncCtrlObj		m_sync;
+	DetInfoCtrlObj	m_det_info;
+	BufferCtrlObj	m_buffer;
+	SyncCtrlObj		m_sync;
 
 };
 } // namespace xpad
