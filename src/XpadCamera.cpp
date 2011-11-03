@@ -71,20 +71,6 @@ m_nb_frames(1)
 
 
 	//-------------------------------------------------------------
-
-	//Reset of the PICExpress
-	//- Removed because not used in the example program: DAQ_FRED and xpad_simple
-	/*if(xpci_resetBoard(BOARDNUM) == 0)
-	{
-	DEB_TRACE() << "PCIe hardware reset is OK";
-	}
-	else
-	{
-	DEB_ERROR() << "PCIe hardware reset has FAILED:" ;
-	throw LIMA_HW_EXC(Error, "Error in PCIe hardware reset!");
-	}*/
-
-	//-------------------------------------------------------------
 	//- Get Modules that are ready
 	if (xpci_modAskReady(&m_modules_mask) == 0)
 	{
@@ -158,7 +144,7 @@ void Camera::start()
 
 	if(m_acquisition_type == 0)
 	{
-		//- Post XPAD_DLL_START_SLOW_MSG msg (aka getOneImage)
+		//- Post XPAD_DLL_START_SLOW_B2_MSG msg (aka getOneImage)
 		this->post(new yat::Message(XPAD_DLL_START_SLOW_B2_MSG), kPOST_MSG_TMO);
 	}
 	else if (m_acquisition_type == 1)
@@ -298,13 +284,13 @@ void Camera::setTrigMode(TrigMode mode)
 	switch( mode )
 	{
 	case IntTrig:
-		m_trigger_type = INTERN_GATE;
+		m_trigger_type = INTERN_GATE; //- IntTrig
 		break;
 	case ExtTrigSingle:
-		m_trigger_type = 10; //- EXTERN_TRIG (eg TIMED)
+		m_trigger_type = TRIGGER_IN; //- ExtTrigSingle
 		break;
 	case ExtGate:
-		m_trigger_type = EXTERN_GATE;
+		m_trigger_type = EXTERN_GATE; //- ExtGate
 		break;
 	default:
 		DEB_ERROR() << "Error: Trigger mode unsupported: only INTERN_GATE, EXTERN_TRIG or EXTERN_GATE" ;
@@ -325,7 +311,7 @@ void Camera::getTrigMode(TrigMode& mode)
 	case INTERN_GATE:
 		mode = IntTrig;
 		break;
-	case 10: //- EXTERN_TRIG (eg TIMED)
+	case TRIGGER_IN:
 		mode = ExtTrigSingle;
 		break;
 	case EXTERN_GATE:
@@ -949,6 +935,8 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 			  delete[] pSeqImage;
 			  m_status = Camera::Ready;
 			  DEB_TRACE() <<"m_status is Ready";
+			
+		
 		  }
 		  break;
 	}
