@@ -106,8 +106,8 @@ m_nb_frames(1)
 	}
 
 
-	//ATTENTION: We consider that image size is with always 8 modules ! 
-	m_image_size = Size(80 * m_chip_number ,120 * 8);
+	//ATTENTION: Modules should be ordered! 
+	m_image_size = Size(80 * m_chip_number ,120 * m_module_number);
 	DEB_TRACE() << "--> Number of chips 		 = " << std::dec << m_chip_number ;
 	DEB_TRACE() << "--> Image width 	(pixels) = " << std::dec << m_image_size.getWidth() ;
 	DEB_TRACE() << "--> Image height	(pixels) = " << std::dec << m_image_size.getHeight() ;
@@ -486,7 +486,13 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 						m_time_unit,
 						30000)==-1)
 					{
-						DEB_ERROR()<< "Error: readOneImage as returned an error..." ;
+						DEB_ERROR()<< "Error: xpci_getOneImage as returned an error..." ;
+       
+					    DEB_TRACE() << "Freeing image";
+					    delete[] pOneImage;			
+
+					    m_status = Camera::Fault;
+					    throw LIMA_HW_EXC(Error, "xpci_getOneImage as returned an error...");
 					}
 
 					m_status = Camera::Readout;
@@ -569,7 +575,13 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 						m_exp_time * 1050 //- timeout: cf Fred B.
 						)==-1)
 					{
-						DEB_ERROR()<< "Error: readOneImage as returned an error..." ;
+						DEB_ERROR()<< "Error: xpci_getOneImage as returned an error..." ;
+       
+					    DEB_TRACE() << "Freeing image";
+					    delete[] pOneImage;			
+
+					    m_status = Camera::Fault;
+					    throw LIMA_HW_EXC(Error, "xpci_getOneImage as returned an error...");
 					}
 
 					m_status = Camera::Readout;
