@@ -153,29 +153,29 @@ class Interface : public HwInterface
 	virtual int 	getNbHwAcquiredFrames();
 
 	//- Xpad specific
-	//- Set all the config G
+	//! Set all the config G
 	void setAllConfigG(const vector<long>& allConfigG)
 		{m_cam.setAllConfigG(allConfigG);}
-	//- Set the F parameters
+	//! Set the F parameters
 	void setFParameters(unsigned deadtime, unsigned init,
 									unsigned shutter, unsigned ovf,    unsigned mode,
 									unsigned n,       unsigned p,
 									unsigned GP1,     unsigned GP2,    unsigned GP3,      unsigned GP4);
-	//-	set the Acquisition type between fast and slow
+	//!	set the Acquisition type between 16 or 32 bit, and Fast or Slow
 	void setAcquisitionType(short acq_type);
-	//-	Load of flat config of value: flat_value (on each pixel)
+	//!	Load of flat config of value: flat_value (on each pixel)
 	void loadFlatConfig(unsigned flat_value);
-	//- Load all the config G with predefined values (on each chip)
+	//! Load all the config G with predefined values (on each chip)
 	void loadAllConfigG();
-	//- Load a wanted config G with a wanted value
+	//! Load a wanted config G with a wanted value
 	void loadConfigG(const vector<unsigned long>& reg_and_value);
-	//- load a known value to the pixel counters
+	//! load a known value to the pixel counters
 	void loadAutoTest(unsigned known_value)
 		{m_cam.loadAutoTest(known_value);}
-	//- Get the DACL values
+	//! Get the DACL values
 	vector<uint16_t> getDacl()
 		{return m_cam.getDacl();}
-	//- Save and load Dacl
+	//! Save and load Dacl
 	void saveAndloadDacl(uint16_t* all_dacls)
 		{m_cam.saveAndloadDacl(all_dacls);}
 	

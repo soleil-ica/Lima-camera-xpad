@@ -107,7 +107,7 @@ m_nb_frames(1)
 
 
 	//ATTENTION: Modules should be ordered! 
-	m_image_size = Size(80 * m_chip_number ,120 * m_module_number);
+	m_image_size = Size(80 * m_chip_number ,120 * m_module_number); //-MODIF-NL-ICA
 	DEB_TRACE() << "--> Number of chips 		 = " << std::dec << m_chip_number ;
 	DEB_TRACE() << "--> Image width 	(pixels) = " << std::dec << m_image_size.getWidth() ;
 	DEB_TRACE() << "--> Image height	(pixels) = " << std::dec << m_image_size.getHeight() ;
@@ -842,6 +842,10 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 			  int nb_images_aquired_before = 0;
 			  int nb_images_acquired = 0;
 			  int current_treated_image = 0;
+				
+                          size_t n1 = 6 + 80 * m_chip_number;
+                          size_t n2 = 80 * m_chip_number;
+			  uint16_t OneLine[n1];
 
 			  //- While acquisition is running
 			  while(xpci_asyncReadStatus() || current_treated_image < m_nb_frames)
@@ -849,14 +853,22 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				  //- for debug
 				  //yat::ThreadingUtilities::sleep(0,50000000); //50 ms
 
-				  DEB_TRACE() << "----------------------------";
-				  DEB_TRACE() << "Nb images treated			= " << current_treated_image;
+				  //DEB_TRACE() << "----------------------------";
+				  //DEB_TRACE() << "Nb images treated			= " << current_treated_image;
+			          do
+				  {
+				    nb_images_acquired = xpci_getGotImages();
+				    if ( nb_images_acquired == nb_images_aquired_before ) 
+					yat::ThreadingUtilities::sleep(0,48000000); //48 ms
+				    else 
+					break;
+				  }
+				  while (1);
 
-				  nb_images_acquired = xpci_getGotImages();
-				  DEB_TRACE() << "Nb images acquired			= " << nb_images_acquired;
-				  DEB_TRACE() << "Nb images acquired before		= " << nb_images_aquired_before;
+				 // DEB_TRACE() << "Nb images acquired			= " << nb_images_acquired;
+				  //DEB_TRACE() << "Nb images acquired before		= " << nb_images_aquired_before;
 
-				  //- ATTENTION :
+				  //- ATTENTION : //-MODIF-NL-ICA: THSI IS EXACTLY WHAT WE DON'T WANT!!!!!
 				  //- Xpix acquires a buffer sized according to m_module_number.
 				  //- Displayed/Lima image will be ALWAYS 560*960, even if some modules are not availables ! 
 				  //- Image zone where a module is not available will be set to "zero"
@@ -886,11 +898,10 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				  int	i=0, j=0, k=0;
 				  //- clean each image and call new frame for each frame
 				  StdBufferCbMgr& buffer_mgr = m_buffer_cb_mgr;
-				  DEB_TRACE() <<"Cleanning each acquired image and publish it through newFrameReady ...";
-				  for(i = nb_images_aquired_before; i<nb_images_acquired; i++)
+				  //DEB_TRACE() <<"Cleanning each acquired image and publish it through newFrameReady ...";
+				  for( i = nb_images_aquired_before; i<nb_images_acquired; i++ )
 				  {
-					  if(nb_images_acquired != nb_images_aquired_before)
-						  nb_images_aquired_before = nb_images_acquired;
+					  nb_images_aquired_before = nb_images_acquired;
 
 					  current_treated_image++;
 
@@ -901,32 +912,32 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 
 					  buffer_mgr.acqFrameNb2BufferNb(i, buffer_nb, concat_frame_nb);
 
-
 					  uint16_t *ptr = (uint16_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
 
 					  //clean the ptr with zero memory, pixels of a not available module are set to "0" 
 					  memset((uint16_t *)ptr,0,m_image_size.getWidth() * m_image_size.getHeight() * 2);
-					  DEB_TRACE() << "---- Niveau ------- 5 ---- ";
+					  // DEB_TRACE() << "---- Niveau ------- 5 ---- ";
 
 					  //iterate on all lines of all modules returned by xpix API 
 					  for(j = 0; j < 120 * m_module_number; j++) 
 					  {
 						  //DEB_TRACE() << "---- Niveau ------- 5.1 ---- ";
-						  uint16_t	OneLine[6+80*m_chip_number];
+						  ::memset(OneLine, 0, n1 * sizeof(uint16_t));
 
 						  //copy entire line with its header and footer
 						  //DEB_TRACE() << "---- Niveau ------- 5.2 ---- ";
-						  for(k = 0; k < (6+80*m_chip_number); k++)
-							  OneLine[k] = pOneImage[j*(6+80*m_chip_number)+k];
+						  
+						  for ( k = 0; k < n1; k++ )
+							  OneLine[k] = pOneImage[j * n1 + k];
 
 						  //compute "offset line" where to copy OneLine[] in the *ptr, to ensure that the lines are copied in order of modules
 						  //DEB_TRACE() << "---- Niveau ------- 5.3 ---- ";
-						  int offset = ((120*(OneLine[1]-1))+(OneLine[4]-1)); 
+						  int offset = ((120 * (OneLine[1] - 1)) + (OneLine[4] - 1)); 
 
 						  //copy cleaned line in the lima buffer
 						  //DEB_TRACE() << "---- Niveau ------- 5.4 ---- ";
-						  for(k = 0; k < (80*m_chip_number); k++)
-							  ptr[(offset*80*m_chip_number)+k] = OneLine[5+k];
+						  for(k = 0; k < n2; k++)
+							  ptr[offset * n2 + k] = OneLine[5 + k]; 
 					  }
 					  //DEB_TRACE() << "---- Niveau ------- 6 ---- ";
 
