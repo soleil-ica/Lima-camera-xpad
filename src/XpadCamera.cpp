@@ -50,13 +50,12 @@ m_nb_frames(1)
 	m_status = Camera::Ready;
 
 	//- Hardcoded temporarly
-	m_time_unit				= MILLISEC_GATE; // 1=MICROSEC_GATE; 2=MILLISEC_GATE; 3=SECONDS_GATE
-	m_pixel_depth = B4;
+	m_time_unit				= MILLISEC_GATE; // MICROSEC_GATE; MILLISEC_GATE; SECONDS_GATE
 
 	//- FParameters
-	m_fparameter_deadtime		= 0;
+	m_fparameter_deadtime	= 0;
 	m_fparameter_init		= 0;
-	m_fparameter_shutter		= 0;
+	m_fparameter_shutter	= 0;
 	m_fparameter_ovf		= 0;
 	m_fparameter_mode		= 0;
 	m_fparameter_n			= 0;
@@ -66,9 +65,7 @@ m_nb_frames(1)
 	m_fparameter_GP3		= 0;
 	m_fparameter_GP4		= 0;
 
-	m_acquisition_type		= 2; // Slow B4
-	m_video_mode 			= false;
-
+    m_acquisition_type		= Camera::SLOW_32; // Slow B4
 
 	//-------------------------------------------------------------
 	//- Get Modules that are ready
@@ -76,6 +73,7 @@ m_nb_frames(1)
 	{
 		DEB_TRACE() << "Ask modules that are ready: OK (modules mask = " << std::hex << m_modules_mask << ")" ;
 		m_module_number = xpci_getModNb(m_modules_mask);
+        
 		if (m_module_number !=0)
 		{
 			DEB_TRACE() << "--> Number of Modules 		 = " << m_module_number ;			
@@ -128,7 +126,21 @@ void Camera::start()
 {
 	DEB_MEMBER_FUNCT();
 
-	//-	((80 colonnes * 7 chips) * taille du pixel + 6 word de control ) * 120 lignes * nb_modules
+    //- Check the image type compatibility
+    if((m_pixel_depth == B2 && m_acquisition_type == Camera::SLOW_32) || (m_pixel_depth == B4 && m_acquisition_type != Camera::SLOW_32))
+    {
+        DEB_ERROR() << "Image type does not correspond to acquisition type: 16 bits vs 32 bits (check properties)" ;
+		throw LIMA_HW_EXC(Error, "Image type does not correspond to acquisition type: 16 bits vs 32 bits (check properties)");
+    }
+
+    //- Check integration time compatibility
+    if((m_acquisition_type == Camera::FAST_16 || m_acquisition_type == Camera::FAST_ASYNC_16 ) && (m_exp_time_sec > 0.100))
+    {
+        DEB_ERROR() << "For exposure above 100 ms, you cannot use fast acquisition types, use instead slow acquisition types" ;
+		throw LIMA_HW_EXC(Error, "For exposure above 100 ms, you cannot use fast acquisition types, use instead slow acquisition types");
+    }
+
+    //-	((80 colonnes * 7 chips) * taille du pixel + 6 word de control ) * 120 lignes * nb_modules
 	if (m_pixel_depth == B2)
 	{
 		m_full_image_size_in_bytes = ((80 * m_chip_number) * 2 + 6*2)  * 120 * m_module_number;
@@ -142,22 +154,22 @@ void Camera::start()
 
 	DEB_TRACE() << "m_acquisition_type = " << m_acquisition_type ;
 
-	if(m_acquisition_type == 0)
+    if(m_acquisition_type == Camera::SLOW_16)
 	{
-		//- Post XPAD_DLL_START_SLOW_B2_MSG msg (aka getOneImage)
+		//- Post XPAD_DLL_START_SLOW_B2_MSG msg (aka getOneImage 16)
 		this->post(new yat::Message(XPAD_DLL_START_SLOW_B2_MSG), kPOST_MSG_TMO);
 	}
-	else if (m_acquisition_type == 1)
+	else if (m_acquisition_type == Camera::FAST_16)
 	{
 		//- Post XPAD_DLL_START_FAST_MSG msg (aka getImgSeq)
 		this->post(new yat::Message(XPAD_DLL_START_FAST_MSG), kPOST_MSG_TMO);
 	}
-	else if (m_acquisition_type == 2)
+	else if (m_acquisition_type == Camera::SLOW_32)
 	{
-		//- Post XPAD_DLL_START_SLOW_MSG_B4 msg (aka getOneImage)
+		//- Post XPAD_DLL_START_SLOW_MSG_B4 msg (aka getOneImage 32)
 		this->post(new yat::Message(XPAD_DLL_START_SLOW_B4_MSG), kPOST_MSG_TMO);
 	}
-	else if (m_acquisition_type == 3)
+	else if (m_acquisition_type == Camera::FAST_ASYNC_16)
 	{
 		//- Post XPAD_DLL_START_FAST_ASYNC_MSG msg (aka getImgSeqAs)
 		this->post(new yat::Message(XPAD_DLL_START_FAST_ASYNC_MSG), kPOST_MSG_TMO);
@@ -165,7 +177,7 @@ void Camera::start()
 	else
 	{
 		DEB_ERROR() << "Acquisition type not supported" ;
-		throw LIMA_HW_EXC(Error, "Acquisition type not supported: possible values are:\n0->SLOW 16 bits\n1->FAST 16 bits\n2->SLOW 32 bits");
+		throw LIMA_HW_EXC(Error, "Acquisition type not supported: possible values are:\n0->SLOW 16 bits\n1->FAST 16 bits\n2->SLOW 32 bits\n3->FAST ASYNC 16 bits");
 	}
 }
 
@@ -332,6 +344,8 @@ void Camera::setExpTime(double exp_time_sec)
 	DEB_MEMBER_FUNCT();
 	DEB_PARAM() << DEB_VAR1(exp_time_sec);
 
+    m_exp_time_sec = exp_time_sec;
+
 	if (exp_time_sec < 0.001)
 	{
 		m_time_unit = MICROSEC_GATE;
@@ -345,7 +359,7 @@ void Camera::setExpTime(double exp_time_sec)
 		m_time_unit = SECONDS_GATE;		
 	}
 
-	//- 1=MICROSEC_GATE; 2=MILLISEC_GATE; 3=SECONDS_GATE
+	//- 
 	switch(m_time_unit)
 	{
 	case MICROSEC_GATE:
@@ -370,7 +384,7 @@ void Camera::getExpTime(double& exp_time_sec)
 	DEB_MEMBER_FUNCT();
 
 	double m_exp_time_temp = m_exp_time;
-	//- 1=MICROSEC_GATE; 2=MILLISEC_GATE; 3=SECONDS_GATE
+	
 	switch(m_time_unit)
 	{
 	case MICROSEC_GATE:
@@ -398,15 +412,6 @@ void Camera::setNbFrames(int nb_frames)
 	DEB_MEMBER_FUNCT();
 	DEB_PARAM() << DEB_VAR1(nb_frames);
 	m_nb_frames = nb_frames;
-	/*if(m_nb_frames == 0) //- Video mode
-	{
-	m_nb_frames = 1;
-	m_video_mode = true;
-	}
-	else
-	{
-	m_video_mode = false;
-	}*/
 }
 
 //-----------------------------------------------------
@@ -428,8 +433,7 @@ void Camera::getStatus(Camera::Status& status)
 	status = m_status;
 	DEB_RETURN() << DEB_VAR1(DEB_HEX(status));
 }
-
-
+ 
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
@@ -551,11 +555,6 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 
 				for( int i=0 ; i < m_nb_frames ;  )
 				{
-					if (m_video_mode == true)
-					{
-						//- Re init i
-						i = 0;
-					}
 					if (m_stop_asked == true)
 					{
 						DEB_TRACE() <<"Stop asked: exit without allocating new images..." ;
@@ -590,17 +589,17 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 
 					//- clean the image and call new frame for each frame
 					StdBufferCbMgr& buffer_mgr = m_buffer_cb_mgr;
-					DEB_TRACE() <<"-> clean acquired image and publish it through newFrameReady()";
+					DEB_TRACE() <<"-> cleanning acquired image and publish it through newFrameReady()";
 
 					int buffer_nb, concat_frame_nb;
 					buffer_mgr.setStartTimestamp(Timestamp::now());
 					buffer_mgr.acqFrameNb2BufferNb(i, buffer_nb, concat_frame_nb);
 
 					uint32_t *ptr = (uint32_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
-					//clean the ptr with zero memory, pixels of a not available module are set to "0" 
+                    //clean the ptr with zero memory, pixels of a not available module are set to "0" 
 					memset((uint32_t *)ptr,0,m_image_size.getWidth() * m_image_size.getHeight() * 4);
 
-					//iterate on all lines of all modules returned by xpix API 
+                    //iterate on all lines of all modules returned by xpix API 
 					int k=0;
 					for(int j = 0; j < 120 * m_module_number; j++) 
 					{
@@ -610,13 +609,13 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 						//copy entire line with its header and footer
 						for(k = 0; k < (6+(80*m_chip_number)*2); k++)
 							OneLine[k] = pOneImage[j*(6+(80*m_chip_number)*2)+k];
-
+                 
 						//copy entire line without header&footer into OneLinePix
 						memcpy((uint32_t *)OneLinePix,(uint16_t *)(&OneLine[5]),80*m_chip_number*4);
-
+                        
 						//compute "offset line" where to copy OneLine[] in the *ptr, to ensure that the lines are copied in order of modules
-						int offset = ((120*(OneLine[1]-1))+(OneLine[4]-1)); 
-
+						int offset = ((120*(OneLine[1]-1))+(OneLine[4]-1));
+                        
 						//copy cleaned line in the lima buffer
 						for(k = 0; k < (80*m_chip_number); k++)
 							ptr[(offset*80*m_chip_number)+k] = OneLinePix[k];
@@ -687,9 +686,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 					delete[] pSeqImage;			
 
 					m_status = Camera::Fault;
-					throw LIMA_HW_EXC(Error, "getImgSeq as returned an error...");
-
-
+                    throw LIMA_HW_EXC(Error, "xpci_getImgSeq as returned an error...");
 				}
 
 				m_status = Camera::Readout;
@@ -832,9 +829,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				  delete[] pSeqImage;			
 
 				  m_status = Camera::Fault;
-				  throw LIMA_HW_EXC(Error, "getImgSeq as returned an error...");
-
-
+                  throw LIMA_HW_EXC(Error, "xpci_getImgSeqAs as returned an error...");
 			  }
 
 			  m_status = Camera::Readout;
@@ -1018,10 +1013,9 @@ void Camera::setFParameters(unsigned deadtime, unsigned init,
 void Camera::setAcquisitionType(short acq_type)
 {
 	DEB_MEMBER_FUNCT();
-	m_acquisition_type = acq_type;
+    m_acquisition_type = (Camera::XpadAcqType)acq_type;
 
 	DEB_TRACE() << "m_acquisition_type = " << m_acquisition_type  ;
-
 }
 
 //-----------------------------------------------------
@@ -1039,8 +1033,6 @@ void Camera::loadFlatConfig(unsigned flat_value)
 	{
 		throw LIMA_HW_EXC(Error, "Error in loadFlatConfig!");
 	}
-
-
 }
 
 //-----------------------------------------------------
@@ -1070,7 +1062,6 @@ void Camera::loadAllConfigG()
 	{
 		throw LIMA_HW_EXC(Error, "Error in loadAllConfigG!");
 	}
-
 }
 
 //-----------------------------------------------------
@@ -1088,7 +1079,6 @@ void Camera::loadConfigG(const vector<unsigned long>& reg_and_value)
 	{
 		throw LIMA_HW_EXC(Error, "Error in loadConfigG!");
 	}
-
 }
 
 //-----------------------------------------------------
@@ -1114,60 +1104,92 @@ void Camera::loadAutoTest(unsigned known_value)
 //-----------------------------------------------------
 vector<uint16_t> Camera::getDacl()
 {
-	DEB_MEMBER_FUNCT();
-
-	/*size_t image_size_in_bytes = ((80 * m_chip_number) * 2 + 6*2)  * 120 * m_module_number;
-	pOneImage = new uint16_t[ image_size_in_bytes / 2 ];
-
-	if(xpci_getModConfig(m_modules_mask, m_chip_number,pOneImage)==0)
-	{
-	DEB_TRACE() << "getDacl -> OK" ;
-	DEB_TRACE() << "Cleanning DACL image and getting DACL values..." ;
-
-	//iterate on all lines of all modules returned by xpix API 
-	vector<uint16_t> clean_image;
-	int k = 0;
-	uint16_t temp = 0;
-	for(int j = 0; j < 120 * m_module_number; j++) 
-	{
-	uint16_t	OneLine[6+80*m_chip_number];
-
-	//copy entire line with its header and footer
-	for(k = 0; k < (6+80*m_chip_number); k++)
-	OneLine[k] = pOneImage[j*(6+80*m_chip_number)+k];
-
-	//compute "offset line" where to copy OneLine[] in the *clean_image, to ensure that the lines are copied in order of modules
-	int offset = ((120*(OneLine[1]-1))+(OneLine[4]-1)); 
-
-	//copy cleaned line in the lima buffer
-	for(k = 0; k < (80*m_chip_number); k++)
-	clean_image[(offset*80*m_chip_number)+k] = OneLine[5+k];
-
-	//get the DACL values: bits 3 to 8 (ie remove 3 first bits)
-	for(k = 0; k < (80*m_chip_number); k++)
-	{
-	temp = clean_image[k];
-	clean_image[k] = ((temp & 0x1ff)>>3);
-	}
-	}
-	delete[] pOneImage; 
-	DEB_TRACE() << "Image cleaned and DACL values getted" ;
-	}
-	else
-	{
-	throw LIMA_HW_EXC(Error, "Error in getDacl!");
-	}
-
-	return clean_image;*/
-
 }
 
 
 //-----------------------------------------------------
-//		Get the DACL values
+//		Save the config L (DACL) to XPAD RAM
 //-----------------------------------------------------
-void Camera::saveAndloadDacl(uint16_t* all_dacls)
+void Camera::saveConfigL(unsigned long modNum, unsigned long calibId, unsigned long chipId, unsigned long curRow, unsigned long* values)
 {
+    DEB_MEMBER_FUNCT();
+
+    //- Transform the module number into a module mask on 8 bits
+    //- eg: if modNum = 4, mask_local = 8
+    unsigned long mask_local = 0x00;
+    SET(mask_local,(modNum-1));
+
+    //- Call the xpix fonction
+    if(xpci_modSaveConfigL(mask_local,calibId,chipId,curRow,(unsigned int*) values) == 0)
+	{
+        DEB_TRACE() << "Lima::Camera::saveConfigL -> xpci_modSaveConfigL -> OK" ;
+	}
+	else
+	{
+		throw LIMA_HW_EXC(Error, "Error in xpci_modSaveConfigL!");
+	}
+}
+
+//-----------------------------------------------------
+//		Save the config G to XPAD RAM
+//-----------------------------------------------------
+void Camera::saveConfigG(unsigned long modNum, unsigned long calibId, unsigned long reg,unsigned long* values)
+{
+    DEB_MEMBER_FUNCT();
+
+    //- Transform the module number into a module mask on 8 bits
+    //- eg: if modNum = 4, mask_local = 8
+    unsigned long mask_local = 0x00;
+    SET(mask_local,(modNum-1));
+
+    //- Call the xpix fonction
+    if(xpci_modSaveConfigG(mask_local,calibId,reg,(unsigned int*) values) == 0)
+	{
+        DEB_TRACE() << "Lima::Camera::saveConfigG -> xpci_modSaveConfigG -> OK" ;
+	}
+	else
+	{
+		throw LIMA_HW_EXC(Error, "Error in xpci_modSaveConfigG!");
+	}
+}
+
+//-----------------------------------------------------
+//		Load the config to detector chips
+//-----------------------------------------------------
+void Camera::loadConfig(unsigned long modNum, unsigned long calibId)
+{
+    DEB_MEMBER_FUNCT();
+
+    //- Transform the module number into a module mask on 8 bits
+    //- eg: if modNum = 4, mask_local = 8
+    unsigned long mask_local = 0x00;
+    SET(mask_local,(modNum-1));
+
+    //- Call the xpix fonction
+    if(xpci_modDetLoadConfig(mask_local,calibId) == 0)
+	{
+        DEB_TRACE() << "Lima::Camera::loadConfig -> xpci_modDetLoadConfig -> OK" ;
+	}
+	else
+	{
+		throw LIMA_HW_EXC(Error, "Error in xpci_modDetLoadConfig!");
+	}
+}
+
+//-----------------------------------------------------
+//		Reset the detector
+//-----------------------------------------------------
+void Camera::reset()
+{
+    DEB_MEMBER_FUNCT();
+    if(xpci_hubModRebootNIOS(m_modules_mask) == 0)
+	{
+        DEB_TRACE() << "Lima::Camera::reset -> xpci_hubModRebootNIOS -> OK" ;
+	}
+	else
+	{
+		throw LIMA_HW_EXC(Error, "Error in xpci_hubModRebootNIOS!");
+	}
 }
 
 

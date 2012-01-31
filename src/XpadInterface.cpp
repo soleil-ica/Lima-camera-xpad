@@ -476,16 +476,12 @@ void Interface::getStatus(StatusType& status)
 			status.det = DetReadout;
 			status.acq = AcqRunning;
 			break;
-		case Camera::Latency:
-			status.det = DetLatency;
-			status.acq = AcqRunning;
-			break;
 		case Camera::Fault:
 		  	status.det = DetFault;
 		  	status.acq = AcqFault;
 			break;
 	}
-	status.det_mask = DetExposure | DetReadout | DetLatency;
+	status.det_mask = DetExposure | DetReadout ;
 }
 
 //-----------------------------------------------------
@@ -499,51 +495,4 @@ int Interface::getNbHwAcquiredFrames()
 	return acq_frames;
 }
 
-//-----------------------------------------------------
-//
-//-----------------------------------------------------
-void Interface::setFParameters(unsigned deadtime, unsigned init,
-			unsigned shutter, unsigned ovf,    unsigned mode,
-			unsigned n,       unsigned p,
-			unsigned GP1,     unsigned GP2,    unsigned GP3,      unsigned GP4)
-{
-	DEB_MEMBER_FUNCT();
-	m_cam.setFParameters(deadtime,init,shutter,ovf,mode,n,p,GP1,GP2,GP3,GP4);
-}
-
-//-----------------------------------------------------
-//
-//-----------------------------------------------------
-void Interface::setAcquisitionType(short acq_type)
-{
-	DEB_MEMBER_FUNCT();
-	m_cam.setAcquisitionType(acq_type);
-}
-
-//-----------------------------------------------------
-//
-//-----------------------------------------------------
-void Interface::loadFlatConfig(unsigned flat_value)
-{
-	DEB_MEMBER_FUNCT();
-	m_cam.loadFlatConfig(flat_value);
-}
-
-//-----------------------------------------------------
-//
-//-----------------------------------------------------
-void Interface::loadAllConfigG()
-{
-	DEB_MEMBER_FUNCT();
-	m_cam.loadAllConfigG();
-}
-
-//-----------------------------------------------------
-//
-//-----------------------------------------------------
-void Interface::loadConfigG(const vector<unsigned long>& reg_and_value)
-{
-	DEB_MEMBER_FUNCT();
-	m_cam.loadConfigG(reg_and_value);
-}
 
