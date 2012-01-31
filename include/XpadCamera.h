@@ -91,7 +91,7 @@ namespace Xpad
 		void getImageSize(Size& size);
 		void setPixelDepth(ImageType pixel_depth);
 		void getPixelDepth(ImageType& pixel_depth);
-		void getPixelSize(double& size);
+		void getPixelSize(double& x_size,double &y_size);
 		void getDetectorType(std::string& type);
 		void getDetectorModel(std::string& model);
 
