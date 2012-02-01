@@ -4,6 +4,7 @@ SRCS = $(xpad-objs:.o=.cpp)
 
 CXXFLAGS += -I../include -I../../../hardware/include -I../../../common/include \
 			-I../../../third-party/yat/include \
+			-I/home/xpix_user/PCI_VALIDATED/trunk/sw/xpci_lib \
 			-Wall -pthread -fPIC -g
 
 all:	Xpad.o

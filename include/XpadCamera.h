@@ -82,7 +82,10 @@ namespace Xpad
 		};
 
 		Camera();
+		Camera(const Camera&);
 		~Camera();
+		
+		Camera& operator=(const Camera&);
 
 		void start();
 		void stop();

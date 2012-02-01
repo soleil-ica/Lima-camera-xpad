@@ -35,7 +35,7 @@ namespace Xpad
   public:
 
     enum Status {
-      Ready, Exposure, Readout,Latency,Fault
+      Ready, Exposure, Readout,Fault
     };
 
     Camera();
@@ -69,7 +69,7 @@ namespace Xpad
     //---------------------------------------------------------------
     //- XPAD Stuff
     //- Set all the config G
-    void setAllConfigG(const std::vector<int>& allConfigG);
+    void setAllConfigG(const std::vector<long>& allConfigG);
     //- Set the F parameters
     void setFParameters(unsigned deadtime, unsigned init,
 			unsigned shutter, unsigned ovf,    unsigned mode,

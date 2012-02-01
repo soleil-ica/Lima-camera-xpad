@@ -114,6 +114,53 @@ m_nb_frames(1)
     m_dacl = new unsigned short[m_image_size.getWidth() * m_image_size.getHeight()];
 }
 
+Camera::Camera(const Camera &other_cam) :
+  m_buffer_cb_mgr(m_buffer_alloc_mgr),
+  m_buffer_ctrl_mgr(m_buffer_cb_mgr)
+{
+  *this = other_cam;
+}
+
+Camera& Camera::operator=(const Camera& other_cam)
+{
+  m_nb_frames 			= other_cam.m_nb_frames;
+  m_image_size 			= other_cam.m_image_size;
+  m_pixel_depth 		= other_cam.m_pixel_depth;
+  m_trigger_type 		= other_cam.m_trigger_type;
+  m_exp_time 			= other_cam.m_exp_time;
+  m_exp_time_sec 		= other_cam.m_exp_time_sec;
+  
+  
+  //---------------------------------
+  //- xpad stuff 
+  m_acquisition_type 		= other_cam.m_acquisition_type;
+  m_modules_mask 		= other_cam.m_modules_mask;
+  m_module_number 		= other_cam.m_module_number;
+  m_chip_number 		= other_cam.m_chip_number;
+  m_full_image_size_in_bytes 	= other_cam.m_full_image_size_in_bytes;
+  m_time_unit 			= other_cam.m_time_unit;
+  m_all_config_g 		= other_cam.m_all_config_g;
+  
+        //- FParameters
+  m_fparameter_deadtime 	= other_cam.m_fparameter_deadtime;
+  m_fparameter_init 		= other_cam.m_fparameter_init;
+  m_fparameter_shutter 		= other_cam.m_fparameter_shutter;
+  m_fparameter_ovf 		= other_cam.m_fparameter_ovf;
+  m_fparameter_mode 		= other_cam.m_fparameter_mode;
+  m_fparameter_n 		= other_cam.m_fparameter_n;
+  m_fparameter_p 		= other_cam.m_fparameter_p;
+  m_fparameter_GP1 		= other_cam.m_fparameter_GP1;
+  m_fparameter_GP2 		= other_cam.m_fparameter_GP2;
+  m_fparameter_GP3 		= other_cam.m_fparameter_GP3;
+  m_fparameter_GP4 		= other_cam.m_fparameter_GP4;
+  
+        //---------------------------------
+  m_status 			= other_cam.m_status;
+  m_stop_asked 			= other_cam.m_stop_asked;
+  
+  return *this;
+}
+
 //---------------------------
 //- Dtor
 //---------------------------
