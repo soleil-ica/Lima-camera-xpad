@@ -203,12 +203,13 @@ void Camera::getImageSize(Size& size)
 }
 
 //-----------------------------------------------------
-//- Camera::getPixelSize(double& size)
+//- Camera::getPixelSize(double& x_size,double& y_size)
 //-----------------------------------------------------
 void Camera::getPixelSize(double& x_size,double& y_size)
 {
 	DEB_MEMBER_FUNCT();
-	x_size = y_size = 130; // pixel size is 130 micron
+	x_size = 130; // pixel size is 130 micron
+    y_size = 130;
 }
 
 //-----------------------------------------------------
@@ -962,7 +963,6 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
   catch( yat::Exception& ex )
   {
 	  DEB_ERROR() << "Error : " << ex.errors[0].desc;
-	  throw;
   }
 }
 
@@ -1099,13 +1099,6 @@ void Camera::loadAutoTest(unsigned known_value)
 
 }
 
-//-----------------------------------------------------
-//		Get the DACL values
-//-----------------------------------------------------
-vector<uint16_t> Camera::getDacl()
-{
-}
-
 
 //-----------------------------------------------------
 //		Save the config L (DACL) to XPAD RAM
@@ -1174,6 +1167,29 @@ void Camera::loadConfig(unsigned long modNum, unsigned long calibId)
 	{
 		throw LIMA_HW_EXC(Error, "Error in xpci_modDetLoadConfig!");
 	}
+}
+
+//-----------------------------------------------------
+//		Get the modules config (Local aka DACL)
+//-----------------------------------------------------
+uint16_t* Camera::getModConfig()
+{
+    DEB_MEMBER_FUNCT();
+
+    uint16_t* data = new uint16_t[m_image_size.getWidth() * m_image_size.getHeight()];
+
+    //- Call the xpix fonction
+    if(xpci_getModConfig(m_modules_mask,m_chip_number,data) == 0)
+	{
+        DEB_TRACE() << "Lima::Camera::getModConfig -> xpci_getModConfig -> OK" ;
+	}
+	else
+	{
+        delete [] data;
+		throw LIMA_HW_EXC(Error, "Error in xpci_getModConfig!");
+	}
+
+    return data;
 }
 
 //-----------------------------------------------------

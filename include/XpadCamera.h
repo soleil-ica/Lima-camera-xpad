@@ -91,7 +91,7 @@ namespace Xpad
 		void getImageSize(Size& size);
 		void setPixelDepth(ImageType pixel_depth);
 		void getPixelDepth(ImageType& pixel_depth);
-		void getPixelSize(double& x_size,double &y_size);
+		void getPixelSize(double& x_size,double& y_size);
 		void getDetectorType(std::string& type);
 		void getDetectorModel(std::string& model);
 
@@ -128,16 +128,14 @@ namespace Xpad
 		void loadConfigG(const vector<unsigned long>& reg_and_value);
 		//! Load a known value to the pixel counters
 		void loadAutoTest(unsigned known_value);
-		//! Get the DACL values
-		vector<uint16_t> getDacl();
-
         //! Save the config L (DACL) to XPAD RAM
         void saveConfigL(unsigned long modMask, unsigned long calibId, unsigned long chipId, unsigned long curRow,unsigned long* values);
         //! Save the config G to XPAD RAM
         void saveConfigG(unsigned long modMask, unsigned long calibId, unsigned long reg,unsigned long* values);
 	    //! Load the config to detector chips
         void loadConfig(unsigned long modMask, unsigned long calibId);
-
+        //! Get the modules config (Local aka DACL)
+        uint16_t* getModConfig();
         //! Reset the detector
         void reset();
 
@@ -191,9 +189,6 @@ namespace Xpad
         //---------------------------------
         Camera::Status	m_status;
         bool			m_stop_asked;
-
-
-
 	};
 
 } // namespace xpad
