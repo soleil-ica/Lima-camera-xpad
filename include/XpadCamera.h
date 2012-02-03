@@ -135,7 +135,7 @@ namespace Xpad
 	    //! Load the config to detector chips
         void loadConfig(unsigned long modMask, unsigned long calibId);
         //! Get the modules config (Local aka DACL)
-        uint16_t* getModConfig();
+        unsigned short*& getModConfig();
         //! Reset the detector
         void reset();
 
@@ -172,6 +172,7 @@ namespace Xpad
         int				        m_full_image_size_in_bytes;
         unsigned int	        m_time_unit;
         vector<long>	        m_all_config_g;
+        unsigned short*         m_dacl;
 
         //- FParameters
         unsigned		m_fparameter_deadtime;

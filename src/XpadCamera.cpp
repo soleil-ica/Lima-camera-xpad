@@ -109,6 +109,9 @@ m_nb_frames(1)
 	DEB_TRACE() << "--> Number of chips 		 = " << std::dec << m_chip_number ;
 	DEB_TRACE() << "--> Image width 	(pixels) = " << std::dec << m_image_size.getWidth() ;
 	DEB_TRACE() << "--> Image height	(pixels) = " << std::dec << m_image_size.getHeight() ;
+
+    //- allocate the dacl array
+    m_dacl = new unsigned short[m_image_size.getWidth() * m_image_size.getHeight()];
 }
 
 //---------------------------
@@ -117,6 +120,8 @@ m_nb_frames(1)
 Camera::~Camera()
 {
 	DEB_DESTRUCTOR();
+
+    delete [] m_dacl;
 }
 
 //---------------------------
@@ -1042,25 +1047,31 @@ void Camera::loadAllConfigG()
 {
 	DEB_MEMBER_FUNCT();
 
-	if(xpci_modLoadAllConfigG(m_modules_mask,	m_chip_number, 
-		m_all_config_g[0],//- CMOS_TP
-		m_all_config_g[1],//- AMP_TP, 
-		m_all_config_g[2],//- ITHH, 
-		m_all_config_g[3],//- VADJ, 
-		m_all_config_g[4],//- VREF, 
-		m_all_config_g[5],//- IMFP, 
-		m_all_config_g[6],//- IOTA, 
-		m_all_config_g[7],//- IPRE, 
-		m_all_config_g[8],//- ITHL, 
-		m_all_config_g[9],//- ITUNE, 
-		m_all_config_g[10]//- IBUFFER
-	) == 0)
+	int chip_id=1;
+	for(int i=0;i < m_chip_number;i++)
 	{
-		DEB_TRACE() << "loadAllConfigG -> OK" ;
-	}
-	else
-	{
-		throw LIMA_HW_EXC(Error, "Error in loadAllConfigG!");
+		if(xpci_modLoadAllConfigG(m_modules_mask,	chip_id, 
+			m_all_config_g[0],//- CMOS_TP
+			m_all_config_g[1],//- AMP_TP, 
+			m_all_config_g[2],//- ITHH, 
+			m_all_config_g[3],//- VADJ, 
+			m_all_config_g[4],//- VREF, 
+			m_all_config_g[5],//- IMFP, 
+			m_all_config_g[6],//- IOTA, 
+			m_all_config_g[7],//- IPRE, 
+			m_all_config_g[8],//- ITHL, 
+			m_all_config_g[9],//- ITUNE, 
+			m_all_config_g[10]//- IBUFFER
+		) == 0)
+		{
+			DEB_TRACE() << "loadAllConfigG for chip " << i << " -> OK" ;
+		}
+		else
+		{
+			throw LIMA_HW_EXC(Error, "Error in loadAllConfigG!");
+		}
+
+		chip_id = chip_id << 1;
 	}
 }
 
@@ -1133,7 +1144,7 @@ void Camera::saveConfigG(unsigned long modNum, unsigned long calibId, unsigned l
     //- Transform the module number into a module mask on 8 bits
     //- eg: if modNum = 4, mask_local = 8
     unsigned long mask_local = 0x00;
-    SET(mask_local,(modNum-1));
+    SET(mask_local,(modNum-1)); //- -1 because modNum start at 1
 
     //- Call the xpix fonction
     if(xpci_modSaveConfigG(mask_local,calibId,reg,(unsigned int*) values) == 0)
@@ -1172,24 +1183,23 @@ void Camera::loadConfig(unsigned long modNum, unsigned long calibId)
 //-----------------------------------------------------
 //		Get the modules config (Local aka DACL)
 //-----------------------------------------------------
-uint16_t* Camera::getModConfig()
+unsigned short*& Camera::getModConfig()
 {
     DEB_MEMBER_FUNCT();
 
-    uint16_t* data = new uint16_t[m_image_size.getWidth() * m_image_size.getHeight()];
-
+    DEB_TRACE() << "Lima::Camera::getModConfig -> xpci_getModConfig -> 1" ;
     //- Call the xpix fonction
-    if(xpci_getModConfig(m_modules_mask,m_chip_number,data) == 0)
+    if(xpci_getModConfig(m_modules_mask,m_chip_number,m_dacl) == 0)
 	{
         DEB_TRACE() << "Lima::Camera::getModConfig -> xpci_getModConfig -> OK" ;
 	}
 	else
 	{
-        delete [] data;
 		throw LIMA_HW_EXC(Error, "Error in xpci_getModConfig!");
 	}
+    DEB_TRACE() << "Lima::Camera::getModConfig -> xpci_getModConfig -> 2" ;
 
-    return data;
+    return m_dacl;
 }
 
 //-----------------------------------------------------
