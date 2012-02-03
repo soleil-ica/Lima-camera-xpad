@@ -602,6 +602,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 					buffer_mgr.acqFrameNb2BufferNb(i, buffer_nb, concat_frame_nb);
 
 					uint32_t *ptr = (uint32_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
+                    
                     //clean the ptr with zero memory, pixels of a not available module are set to "0" 
 					memset((uint32_t *)ptr,0,m_image_size.getWidth() * m_image_size.getHeight() * 4);
 
@@ -971,22 +972,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
   }
 }
 
-//-----------------------------------------------------
-//  callback fct from Xpix
-//-----------------------------------------------------
-/*int Camera::asyncCB(int ret, void *userData)
-{
-printf("\tASYNC: callBack read returned status was %d\n",ret);
-return 0;
-}*/
 
-//-----------------------------------------------------
-//
-//-----------------------------------------------------
-void Camera::setAllConfigG(const vector<long>& allConfigG)
-{
-	m_all_config_g = allConfigG;
-}
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
@@ -1043,36 +1029,35 @@ void Camera::loadFlatConfig(unsigned flat_value)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void Camera::loadAllConfigG()
+void Camera::loadAllConfigG(unsigned long modNum, unsigned long chipId , unsigned long* config_values)
 {
 	DEB_MEMBER_FUNCT();
 
-	int chip_id=1;
-	for(int i=0;i < m_chip_number;i++)
-	{
-		if(xpci_modLoadAllConfigG(m_modules_mask,	chip_id, 
-			m_all_config_g[0],//- CMOS_TP
-			m_all_config_g[1],//- AMP_TP, 
-			m_all_config_g[2],//- ITHH, 
-			m_all_config_g[3],//- VADJ, 
-			m_all_config_g[4],//- VREF, 
-			m_all_config_g[5],//- IMFP, 
-			m_all_config_g[6],//- IOTA, 
-			m_all_config_g[7],//- IPRE, 
-			m_all_config_g[8],//- ITHL, 
-			m_all_config_g[9],//- ITUNE, 
-			m_all_config_g[10]//- IBUFFER
-		) == 0)
+    //- Transform the module number into a module mask on 8 bits
+    //- eg: if modNum = 4, mask_local = 8
+    unsigned long mask_local = 0x00;
+    SET(mask_local,(modNum-1));// -1 because modNum start at 1
+
+	if(xpci_modLoadAllConfigG(mask_local,chipId, 
+			                                    config_values[0],//- CMOS_TP
+			                                    config_values[1],//- AMP_TP, 
+			                                    config_values[2],//- ITHH, 
+			                                    config_values[3],//- VADJ, 
+			                                    config_values[4],//- VREF, 
+			                                    config_values[5],//- IMFP, 
+			                                    config_values[6],//- IOTA, 
+			                                    config_values[7],//- IPRE, 
+			                                    config_values[8],//- ITHL, 
+			                                    config_values[9],//- ITUNE, 
+			                                    config_values[10]//- IBUFFER
+		                        ) == 0)
 		{
-			DEB_TRACE() << "loadAllConfigG for chip " << i << " -> OK" ;
+			DEB_TRACE() << "loadAllConfigG for module " << modNum  << ", and chip" << chipId << " -> OK" ;
 		}
 		else
 		{
 			throw LIMA_HW_EXC(Error, "Error in loadAllConfigG!");
 		}
-
-		chip_id = chip_id << 1;
-	}
 }
 
 //-----------------------------------------------------
@@ -1121,12 +1106,12 @@ void Camera::saveConfigL(unsigned long modNum, unsigned long calibId, unsigned l
     //- Transform the module number into a module mask on 8 bits
     //- eg: if modNum = 4, mask_local = 8
     unsigned long mask_local = 0x00;
-    SET(mask_local,(modNum-1));
+    SET(mask_local,(modNum-1));// -1 because modNum start at 1
 
     //- Call the xpix fonction
     if(xpci_modSaveConfigL(mask_local,calibId,chipId,curRow,(unsigned int*) values) == 0)
 	{
-        DEB_TRACE() << "Lima::Camera::saveConfigL -> xpci_modSaveConfigL -> OK" ;
+        DEB_TRACE() << "saveConfigL for module: " << modNum << " | chip: " << chipId << " | row: " << curRow << " -> OK" ;
 	}
 	else
 	{
@@ -1144,12 +1129,12 @@ void Camera::saveConfigG(unsigned long modNum, unsigned long calibId, unsigned l
     //- Transform the module number into a module mask on 8 bits
     //- eg: if modNum = 4, mask_local = 8
     unsigned long mask_local = 0x00;
-    SET(mask_local,(modNum-1)); //- -1 because modNum start at 1
+    SET(mask_local,(modNum-1)); // -1 because modNum start at 1
 
     //- Call the xpix fonction
     if(xpci_modSaveConfigG(mask_local,calibId,reg,(unsigned int*) values) == 0)
 	{
-        DEB_TRACE() << "Lima::Camera::saveConfigG -> xpci_modSaveConfigG -> OK" ;
+        DEB_TRACE() << "saveConfigG for module: " << modNum << " | reg: " << reg << " -> OK" ;
 	}
 	else
 	{
@@ -1167,12 +1152,12 @@ void Camera::loadConfig(unsigned long modNum, unsigned long calibId)
     //- Transform the module number into a module mask on 8 bits
     //- eg: if modNum = 4, mask_local = 8
     unsigned long mask_local = 0x00;
-    SET(mask_local,(modNum-1));
+    SET(mask_local,(modNum-1));// -1 because modNum start at 1
 
     //- Call the xpix fonction
     if(xpci_modDetLoadConfig(mask_local,calibId) == 0)
 	{
-        DEB_TRACE() << "Lima::Camera::loadConfig -> xpci_modDetLoadConfig -> OK" ;
+        DEB_TRACE() << "loadConfig for module: " << modNum << " | calibID: " << calibId << " -> OK" ;
 	}
 	else
 	{
@@ -1210,7 +1195,7 @@ void Camera::reset()
     DEB_MEMBER_FUNCT();
     if(xpci_hubModRebootNIOS(m_modules_mask) == 0)
 	{
-        DEB_TRACE() << "Lima::Camera::reset -> xpci_hubModRebootNIOS -> OK" ;
+        DEB_TRACE() << "reset -> xpci_hubModRebootNIOS -> OK" ;
 	}
 	else
 	{

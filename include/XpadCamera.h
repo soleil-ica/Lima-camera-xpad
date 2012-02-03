@@ -122,8 +122,8 @@ namespace Xpad
 		void setAcquisitionType(short acq_type);
 		//!	Load of flat config of value: flat_value (on each pixel)
 		void loadFlatConfig(unsigned flat_value);
-		//! Load all the config G with predefined values (on each chip)
-		void loadAllConfigG();
+		//! Load all the config G 
+		void loadAllConfigG(unsigned long modNum, unsigned long chipId , unsigned long* config_values);
 		//! Load a wanted config G with a wanted value
 		void loadConfigG(const vector<unsigned long>& reg_and_value);
 		//! Load a known value to the pixel counters
