@@ -67,6 +67,16 @@ m_nb_frames(1)
 
     m_acquisition_type		= Camera::SLOW_32; // Slow B4
 
+	if(xpci_init(0,XPAD_32))
+	  THROW_HW_ERROR(Error) << "Can't init board";
+
+	usleep(100);
+	xpci_resetBoard(0);
+	usleep(100);
+	xpci_resetChannels(0);
+	xpci_resetChannels(1);
+	//xpci_debugMsg(1);
+
 	//-------------------------------------------------------------
 	//- Get Modules that are ready
 	if (xpci_modAskReady(&m_modules_mask) == 0)
@@ -112,6 +122,10 @@ m_nb_frames(1)
 
     //- allocate the dacl array
     m_dacl = new unsigned short[m_image_size.getWidth() * m_image_size.getHeight()];
+
+	DEB_TRACE() << "Starting message thread";
+	this->go(2000);
+	DEB_TRACE() << "End starting message thread";
 }
 
 Camera::Camera(const Camera &other_cam) :
@@ -119,6 +133,8 @@ Camera::Camera(const Camera &other_cam) :
   m_buffer_ctrl_mgr(m_buffer_cb_mgr)
 {
   *this = other_cam;
+
+  this->go(2000);
 }
 
 Camera& Camera::operator=(const Camera& other_cam)
@@ -169,6 +185,7 @@ Camera::~Camera()
 	DEB_DESTRUCTOR();
 
     delete [] m_dacl;
+    xpci_close(0);
 }
 
 //---------------------------
