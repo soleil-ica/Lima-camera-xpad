@@ -1,4 +1,4 @@
-Andor
+Xpad
 -------
 
 .. image:: xpad.jpg
@@ -6,7 +6,7 @@ Andor
 Intoduction
 ```````````
 The XPAD detector is based on the photon counting technology providing a quasi noiseless imaging as well as a very high dynamic range and a fast frame rate (500 images/s).
-This is a detector from the collaboration of Soleil, CPPM and ESRF(D2AM). It is now supported by the IMXPAD company.
+This is a detector from the collaboration of Soleil, CPPM and ESRF(D2AM). It is now supported by the ImXPAD company.
 
 The XPAD run under Linux, with the help of a PCI express board from PLDA.
 
