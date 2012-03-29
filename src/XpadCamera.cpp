@@ -44,7 +44,8 @@ m_chip_number(7),
 m_exp_time(1000),
 m_pixel_depth(B4),
 m_trigger_type(INTERN_GATE),
-m_nb_frames(1)
+m_nb_frames(1),
+m_timeout_ms(0)
 {
 	DEB_CONSTRUCTOR();
 	m_status = Camera::Ready;
@@ -80,6 +81,8 @@ m_nb_frames(1)
 		}
 		else
 		{
+			/*DEB_TRACE() << "Reseting detector ... ";
+			this->reset();*/
 			DEB_ERROR() << "No modules found: retry to Init" ;
 			//- Test if PCIe is OK
 			if(xpci_isPCIeOK() == 0) 
@@ -112,53 +115,6 @@ m_nb_frames(1)
 
     //- allocate the dacl array
     m_dacl = new unsigned short[m_image_size.getWidth() * m_image_size.getHeight()];
-}
-
-Camera::Camera(const Camera &other_cam) :
-  m_buffer_cb_mgr(m_buffer_alloc_mgr),
-  m_buffer_ctrl_mgr(m_buffer_cb_mgr)
-{
-  *this = other_cam;
-}
-
-Camera& Camera::operator=(const Camera& other_cam)
-{
-  m_nb_frames 			= other_cam.m_nb_frames;
-  m_image_size 			= other_cam.m_image_size;
-  m_pixel_depth 		= other_cam.m_pixel_depth;
-  m_trigger_type 		= other_cam.m_trigger_type;
-  m_exp_time 			= other_cam.m_exp_time;
-  m_exp_time_sec 		= other_cam.m_exp_time_sec;
-  
-  
-  //---------------------------------
-  //- xpad stuff 
-  m_acquisition_type 		= other_cam.m_acquisition_type;
-  m_modules_mask 		= other_cam.m_modules_mask;
-  m_module_number 		= other_cam.m_module_number;
-  m_chip_number 		= other_cam.m_chip_number;
-  m_full_image_size_in_bytes 	= other_cam.m_full_image_size_in_bytes;
-  m_time_unit 			= other_cam.m_time_unit;
-  m_all_config_g 		= other_cam.m_all_config_g;
-  
-        //- FParameters
-  m_fparameter_deadtime 	= other_cam.m_fparameter_deadtime;
-  m_fparameter_init 		= other_cam.m_fparameter_init;
-  m_fparameter_shutter 		= other_cam.m_fparameter_shutter;
-  m_fparameter_ovf 		= other_cam.m_fparameter_ovf;
-  m_fparameter_mode 		= other_cam.m_fparameter_mode;
-  m_fparameter_n 		= other_cam.m_fparameter_n;
-  m_fparameter_p 		= other_cam.m_fparameter_p;
-  m_fparameter_GP1 		= other_cam.m_fparameter_GP1;
-  m_fparameter_GP2 		= other_cam.m_fparameter_GP2;
-  m_fparameter_GP3 		= other_cam.m_fparameter_GP3;
-  m_fparameter_GP4 		= other_cam.m_fparameter_GP4;
-  
-        //---------------------------------
-  m_status 			= other_cam.m_status;
-  m_stop_asked 			= other_cam.m_stop_asked;
-  
-  return *this;
 }
 
 //---------------------------
@@ -417,14 +373,20 @@ void Camera::setExpTime(double exp_time_sec)
 	{
 	case MICROSEC_GATE:
 		m_exp_time = (unsigned) (exp_time_sec * 1000000);
+		m_timeout_ms = 100; //- 100 ms car time unit microseconde
+		DEB_TRACE() << "MICROSEC_GATE: m_timeout_ms = " << m_timeout_ms;
 		break;
 
 	case MILLISEC_GATE:
 		m_exp_time = (unsigned) (exp_time_sec * 1000);
+		m_timeout_ms = m_exp_time * 2;//- 
+		DEB_TRACE() << "MILLISEC_GATE: m_timeout_ms = " << m_timeout_ms;
 		break;
 
 	case SECONDS_GATE:
 		m_exp_time = (unsigned) (exp_time_sec * 1);
+		m_timeout_ms = m_exp_time  * 1050; //- exp_time (s) * 1000 (pour ms) + 5%
+		DEB_TRACE() << "SECONDS_GATE: m_timeout_ms = " << m_timeout_ms;
 		break;
 	}
 }
@@ -541,7 +503,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 						m_trigger_type,
 						m_exp_time,
 						m_time_unit,
-						30000)==-1)
+						m_timeout_ms)==-1)
 					{
 						DEB_ERROR()<< "Error: xpci_getOneImage as returned an error..." ;
        
@@ -624,7 +586,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 						m_trigger_type,
 						m_exp_time,
 						m_time_unit,
-						m_exp_time * 1050 //- timeout: cf Fred B.
+						m_timeout_ms
 						)==-1)
 					{
 						DEB_ERROR()<< "Error: xpci_getOneImage as returned an error..." ;
@@ -728,7 +690,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 					m_time_unit,
 					m_nb_frames,
 					(void**)pSeqImage,
-					8000) == -1)
+					(int)FIRST_TIMEOUT) == -1)
 				{
 					DEB_ERROR() << "Error: getImgSeq as returned an error..." ;
 
@@ -847,7 +809,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 			  //- Start the img sequence
 			  DEB_TRACE() <<"start acquiring a sequence of images";	
 			  cout << " ============================================== " << endl;
-			  cout << "Parametres pour getImgSeq: "<< endl;
+			  cout << "Parametres pour getImgSeqAs: "<< endl;
 			  cout << "m_pixel_depth 	= "<< m_pixel_depth << endl;
 			  cout << "m_modules_mask = "<< m_modules_mask << endl;
 			  cout << "m_chip_number 	= "<< m_chip_number << endl;
@@ -862,13 +824,13 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				  m_modules_mask,
 				  m_chip_number,
 				  NULL, //- callback fct not used
-				  10000,//FL: set 10 sec global timeout ??
+				  10000, //- callback timeout: 10s
 				  m_trigger_type,
 				  m_exp_time,
 				  m_time_unit,
 				  m_nb_frames,
 				  (void**)pSeqImage,
-				  8000,
+				  FIRST_TIMEOUT,
 				  NULL) //- user Parameter not used
 				  == -1)
 
@@ -1082,10 +1044,12 @@ void Camera::loadAllConfigG(unsigned long modNum, unsigned long chipId , unsigne
 
     //- Transform the module number into a module mask on 8 bits
     //- eg: if modNum = 4, mask_local = 8
-    unsigned long mask_local = 0x00;
-    SET(mask_local,(modNum-1));// -1 because modNum start at 1
+    unsigned long mask_local_module = 0x00;
+    SET(mask_local_module,(modNum-1));// -1 because modNum start at 1
+    unsigned long mask_local_chip = 0x00;
+    SET(mask_local_chip,(chipId-1));// -1 because chipId start at 1
 
-	if(xpci_modLoadAllConfigG(mask_local,chipId, 
+	if(xpci_modLoadAllConfigG(mask_local_module,mask_local_chip, 
 			                                    config_values[0],//- CMOS_TP
 			                                    config_values[1],//- AMP_TP, 
 			                                    config_values[2],//- ITHH, 
@@ -1099,7 +1063,8 @@ void Camera::loadAllConfigG(unsigned long modNum, unsigned long chipId , unsigne
 			                                    config_values[10]//- IBUFFER
 		                        ) == 0)
 		{
-			DEB_TRACE() << "loadAllConfigG for module " << modNum  << ", and chip" << chipId << " -> OK" ;
+			DEB_TRACE() << "loadAllConfigG for module " << modNum  << ", and chip " << chipId << " -> OK" ;
+			DEB_TRACE() << "(loadAllConfigG for mask_local_module " << mask_local_module  << ", and mask_local_chip " << mask_local_chip << " )" ;
 		}
 		else
 		{
@@ -1154,6 +1119,8 @@ void Camera::saveConfigL(unsigned long modNum, unsigned long calibId, unsigned l
     //- eg: if modNum = 4, mask_local = 8
     unsigned long mask_local = 0x00;
     SET(mask_local,(modNum-1));// -1 because modNum start at 1
+    //- because start at 1 at high level and 0 at low level
+    chipId = chipId - 1;
 
     //- Call the xpix fonction
     if(xpci_modSaveConfigL(mask_local,calibId,chipId,curRow,(unsigned int*) values) == 0)
@@ -1240,13 +1207,14 @@ unsigned short*& Camera::getModConfig()
 void Camera::reset()
 {
     DEB_MEMBER_FUNCT();
-    if(xpci_hubModRebootNIOS(m_modules_mask) == 0)
+	unsigned int ALL_MODULES = 0xFF;
+    if(xpci_modRebootNIOS(ALL_MODULES) == 0)
 	{
-        DEB_TRACE() << "reset -> xpci_hubModRebootNIOS -> OK" ;
+        DEB_TRACE() << "reset -> xpci_modRebootNIOS -> OK" ;
 	}
 	else
 	{
-		throw LIMA_HW_EXC(Error, "Error in xpci_hubModRebootNIOS!");
+		throw LIMA_HW_EXC(Error, "Error in xpci_modRebootNIOS!");
 	}
 }
 

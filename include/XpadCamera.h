@@ -55,11 +55,14 @@ using namespace std;
 #define SET(var, bit) ( var|=  (1 << bit)  )       /* positionne le bit num�ro 'bit' � 1 dans une variable*/
 #define CLR(var, bit) ( var&= ~(1 << bit)  )       /* positionne le bit num�ro 'bit' � 0 dans une variable*/
 #define GET(var, bit) ((var&   (1 << bit))?1:0 )   /* retourne la valeur du bit num�ro 'bit' dans une variable*/
+const int FIRST_TIMEOUT = 8000;
+
 
 namespace lima
 {
 namespace Xpad
 {
+	
 	/*******************************************************************
 	* \class Camera
 	* \brief object controlling the xpad detector via xpix driver
@@ -82,10 +85,7 @@ namespace Xpad
 		};
 
 		Camera();
-		Camera(const Camera&);
 		~Camera();
-		
-		Camera& operator=(const Camera&);
 
 		void start();
 		void stop();
@@ -161,6 +161,8 @@ namespace Xpad
 		IMG_TYPE		m_pixel_depth;
 		unsigned short	m_trigger_type;
 		unsigned int	m_exp_time;
+		int         	m_timeout_ms;
+		
         double      	m_exp_time_sec;
 
 		uint16_t**	pSeqImage;
