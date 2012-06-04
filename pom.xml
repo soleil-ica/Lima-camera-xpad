@@ -13,22 +13,22 @@
     <name>LimaXpad</name>    <!-- use for the name of executable -->
     <description>This module controls the Xpad Detector</description>
 
-    <!--dependencies>
+    <dependencies>
 	<dependency>
             <groupId>fr.in2p3</groupId>
             <artifactId>Xpix-${aol}-static-release</artifactId>
         </dependency>
-    </dependencies-->
+    </dependencies>
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.freehep</groupId>
                 <artifactId>freehep-nar-plugin</artifactId>
-				<configuration>
+				<!--configuration>
                      <cpp>                      
                         <systemIncludePaths>
-                           <systemIncludePath>/home/imxpad/ICA/xpix_library_2_3/imxpad_lib/xpci_lib</systemIncludePath>
+                           <systemIncludePath>/home/experiences/detecteurs/detecteurs/ICA/Xpix_new/xpci_lib</systemIncludePath>
                         </systemIncludePaths>
                      </cpp>
 
@@ -38,11 +38,11 @@
                            <lib>
                               <name>xpci_lib</name>
                               <type>static</type>
-                              <directory>/home/imxpad/ICA/xpix_library_2_3/imxpad_lib/xpci_lib</directory>
+                              <directory>/home/experiences/detecteurs/detecteurs/ICA/Xpix_new/xpci_lib</directory>
                            </lib>
                         </libs>
                      </linker>
-                 </configuration>
+                 </configuration-->
             </plugin>
         </plugins>
     </build>
