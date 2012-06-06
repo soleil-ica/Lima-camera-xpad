@@ -1,50 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>fr.soleil.lib.Lima</groupId>
-        <artifactId>Camera</artifactId>
-        <version>1.1.8</version>
-    </parent>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>fr.soleil.lib.Lima</groupId>
+		<artifactId>Camera</artifactId>
+		<version>1.1.9</version>
+	</parent>
 
-    <groupId>fr.soleil.lib.Lima.Camera</groupId>
-    <artifactId>LimaXpad-${aol}-shared-${mode}</artifactId>
-    <packaging>nar</packaging>
-    <name>LimaXpad</name>    <!-- use for the name of executable -->
-    <description>This module controls the Xpad Detector</description>
+	<groupId>fr.soleil.lib.Lima.Camera</groupId>
+	<artifactId>LimaXpad-${aol}-shared-${mode}</artifactId>
+	<packaging>nar</packaging>
+	<name>LimaXpad</name>    <!-- use for the name of executable -->
+	<description>This module controls the Xpad Detector</description>
 
-    <dependencies>
-	<dependency>
-            <groupId>fr.in2p3</groupId>
-            <artifactId>Xpix-${aol}-static-release</artifactId>
-        </dependency>
-    </dependencies>
+	<dependencies>
+		<dependency>
+			<groupId>fr.in2p3</groupId>
+			<artifactId>Xpix-${aol}-static-release</artifactId>
+		</dependency>
+	</dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.freehep</groupId>
-                <artifactId>freehep-nar-plugin</artifactId>
-				<!--configuration>
-                     <cpp>                      
-                        <systemIncludePaths>
-                           <systemIncludePath>/home/experiences/detecteurs/detecteurs/ICA/Xpix_new/xpci_lib</systemIncludePath>
-                        </systemIncludePaths>
-                     </cpp>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.freehep</groupId>
+				<artifactId>freehep-nar-plugin</artifactId>
+<!-- 				<configuration> -->
+<!-- 				<cpp> -->
+<!-- 					<systemIncludePaths> -->
+<!-- 						<systemIncludePath>/home/imxpad/ICA/xpix_library_2_3/imxpad_lib/xpci_lib</systemIncludePath> -->
+<!-- 						<systemIncludePath>/home/informatique/ica/noureddine/DeviceSources/temp/xpix_library_2_3/imxpad_lib/xpci_lib</systemIncludePath> -->
+<!-- 					</systemIncludePaths> -->
+<!-- 				</cpp> -->
 
-                    
-                     <linker>
-                        <libs>                          
-                           <lib>
-                              <name>xpci_lib</name>
-                              <type>static</type>
-                              <directory>/home/experiences/detecteurs/detecteurs/ICA/Xpix_new/xpci_lib</directory>
-                           </lib>
-                        </libs>
-                     </linker>
-                 </configuration-->
-            </plugin>
-        </plugins>
-    </build>
+
+<!-- 				<linker> -->
+<!-- 					<libs> -->
+<!-- 						<lib> -->
+<!-- 							<name>xpci_lib</name> -->
+<!-- 							<type>static</type> -->
+<!-- 							<directory>/home/imxpad/ICA/xpix_library_2_3/imxpad_lib/xpci_lib</directory> -->
+<!-- 							<directory>/home/informatique/ica/noureddine/DeviceSources/temp/xpix_library_2_3/imxpad_lib/xpci_lib</directory> -->
+<!-- 						</lib> -->
+<!-- 					</libs> -->
+<!-- 				</linker> -->
+<!-- 			</configuration> -->
+			</plugin>
+		</plugins>
+	</build>
 
 </project>
