@@ -490,9 +490,9 @@ void Interface::getStatus(StatusType& status)
 int Interface::getNbHwAcquiredFrames()
 {
 	DEB_MEMBER_FUNCT();
-	int acq_frames;
-	m_cam.getNbFrames(acq_frames);
-	return acq_frames;
+	int nb_acq_frames;
+	nb_acq_frames = m_cam.getNbHwAcquiredFrames();
+	return nb_acq_frames;
 }
 
 

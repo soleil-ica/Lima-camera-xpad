@@ -46,10 +46,10 @@ m_nb_frames(1)
 {
 	DEB_CONSTRUCTOR();
 
-	m_status = Camera::Ready;
-
-	//- default value:
-    m_acquisition_type		= Camera::SYNC; // SYNC
+	//- default values:
+    m_status            = Camera::Ready;
+    m_acquisition_type	= Camera::SYNC;
+    m_current_nb_frames = 0;
 
     if		(xpad_model == "BACKPLANE") 	m_xpad_model = BACKPLANE;
     else if	(xpad_model == "IMXPAD_S70")	m_xpad_model = IMXPAD_S70;
@@ -58,8 +58,6 @@ m_nb_frames(1)
     else if	(xpad_model == "IMXPAD_S540")	m_xpad_model = IMXPAD_S540;
     else
     	throw LIMA_HW_EXC(Error, "Xpad Model not supported");
-    //- temporary as a workaround to the pogo6 bug
-    ////m_xpad_model = IMXPAD_S140;
 
     //-------------------------------------------------------------
     //- Init the xpix driver
@@ -141,6 +139,9 @@ void Camera::start()
 {
 	DEB_MEMBER_FUNCT();
 
+    m_stop_asked = false;
+		unsigned long local_nb_frames = 0;
+
     //-	((80 colonnes * 7 chips) * taille du pixel) * 120 lignes * nb_modules
 	if (m_pixel_depth == B2)
 	{
@@ -156,8 +157,18 @@ void Camera::start()
 	DEB_TRACE() << "Setting Exposure parameters with values: ";
 	DEB_TRACE() << "\tm_exp_time_usec 		= " << m_exp_time_usec;
 	DEB_TRACE() << "\tm_imxpad_trigger_mode = " << m_imxpad_trigger_mode;
-	DEB_TRACE() << "\tm_nb_frames 			= " << m_nb_frames;
+
+	DEB_TRACE() << "\tm_nb_frames (before live mode check)			= " << m_nb_frames;
 	DEB_TRACE() << "\tm_imxpad_format 		= " << m_imxpad_format;
+
+		//- Check if live mode
+		if (m_nb_frames == 0) //- ie live mode
+			local_nb_frames = 1;
+		else
+			local_nb_frames = m_nb_frames;
+
+		DEB_TRACE() << "\tlocal_nb_frames (after live mode check)			= " << local_nb_frames;
+		
 
 	//- call the setExposureParameters
     //- hard coded params (until needed)
@@ -166,8 +177,8 @@ void Camera::start()
     unsigned long time_before_start_usec = 0;
     unsigned long shutter_time_usec = 0;
 
-//m_xpad_model parameter must be 1 (in our detector type IMXPAD_S140) or XPIX_NOT_USED_YET
-//maybe library must manage this, we can provide IMXPAD_Sxx to this function if necessary
+    //m_xpad_model parameter must be 1 (in our detector type IMXPAD_S140) or XPIX_NOT_USED_YET
+    //maybe library must manage this, we can provide IMXPAD_Sxx to this function if necessary
 	setExposureParameters(	m_exp_time_usec,
 							time_between_images_usec,
 							time_before_start_usec,
@@ -176,7 +187,7 @@ void Camera::start()
 							m_imxpad_trigger_mode,
 							XPIX_NOT_USED_YET,
 							XPIX_NOT_USED_YET,
-							m_nb_frames,
+							local_nb_frames,
 							XPIX_NOT_USED_YET,
 							m_imxpad_format,
 							(m_xpad_model == IMXPAD_S140)?1:XPIX_NOT_USED_YET,/**/
@@ -185,7 +196,13 @@ void Camera::start()
 							XPIX_NOT_USED_YET,
 							XPIX_NOT_USED_YET);
 
-    if(m_acquisition_type == Camera::SYNC)
+
+		if (m_nb_frames == 0) //- aka live mode
+    {
+        //- Post XPAD_DLL_START_LIVE_ACQ_MSG msg
+			this->post(new yat::Message(XPAD_DLL_START_LIVE_ACQ_MSG), kPOST_MSG_TMO);
+    }
+    else if(m_acquisition_type == Camera::SYNC)
 	{
 		//- Post XPAD_DLL_START_SYNC_MSG msg
 		this->post(new yat::Message(XPAD_DLL_START_SYNC_MSG), kPOST_MSG_TMO);
@@ -211,6 +228,7 @@ void Camera::stop()
 
 	//- call the abort fct from xpix lib
 	xpci_modAbortExposure();
+    m_stop_asked = true;
 
 	m_status = Camera::Ready;
 }
@@ -411,6 +429,14 @@ void Camera::getNbFrames(int& nb_frames)
 	DEB_RETURN() << DEB_VAR1(nb_frames);
 }
 
+//---------------------------------------------------------------------------------------
+// Camera::getNbHwAcquiredFrames()
+//---------------------------------------------------------------------------------------
+int Camera::getNbHwAcquiredFrames()
+{
+	return m_current_nb_frames + 1; //- because m_current_nb_frames start at 0 
+}
+
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
@@ -525,6 +551,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				DEB_TRACE() <<"Publish each acquired image through newFrameReady()";
 				for(i=0; i<m_nb_frames; i++)
 				{
+                    m_current_nb_frames = i;
 					int buffer_nb, concat_frame_nb;
 					buffer_mgr.setStartTimestamp(Timestamp::now());
 					buffer_mgr.acqFrameNb2BufferNb(i, buffer_nb, concat_frame_nb);
@@ -558,6 +585,133 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 
 			}
 			break;
+
+            //-----------------------------------------------------    
+			case XPAD_DLL_START_LIVE_ACQ_MSG:
+			{
+								DEB_TRACE() 	<< "========================================="
+                DEB_TRACE() <<"Camera::->XPAD_DLL_START_LIVE_ACQ_MSG";
+
+				int one_frame = 1;
+
+				//- Declare local temporary image buffer
+				void**	image_array;
+
+				// allocate multiple buffers
+				DEB_TRACE() <<"Allocating images array (" << one_frame << " images)";
+				if(m_pixel_depth == B2)
+					image_array = reinterpret_cast<void**>(new uint16_t* [ one_frame ]);
+				else//B4
+					image_array = reinterpret_cast<void**>(new uint32_t* [ one_frame ]);
+
+				DEB_TRACE() <<"Allocating every image pointer of the images array (1 image full size = "<< m_full_image_size_in_bytes << ") ";
+				for( int i=0 ; i < one_frame ; i++ )
+				{
+					if(m_pixel_depth == B2)
+						image_array[i] = new uint16_t [ m_full_image_size_in_bytes / 2 ];//we allocate a number of pixels
+					else //B4
+						image_array[i] = new uint32_t [ m_full_image_size_in_bytes / 4 ];//we allocate a number of pixels
+				}
+
+				m_status = Camera::Exposure;
+
+				//- Start the img sequence
+				DEB_TRACE() <<"Start acquiring a sequence of images";
+
+				if ( xpci_getImgSeq(	m_pixel_depth, 
+					                    m_modules_mask,
+					                    m_chip_number,
+                            			one_frame,
+                            			(void**)image_array,
+                            			// next are ignored in V2:
+                            			XPIX_V1_COMPATIBILITY,
+					                    XPIX_V1_COMPATIBILITY,
+					                    XPIX_V1_COMPATIBILITY,
+					                    XPIX_V1_COMPATIBILITY) == -1)
+				{
+					DEB_ERROR() << "Error: getImgSeq as returned an error..." ;
+
+					DEB_TRACE() << "Freeing every image pointer of the images array";
+					for(int i=0 ; i < one_frame ; i++)
+					{
+						if(m_pixel_depth == B2)
+							delete[] reinterpret_cast<uint16_t*>(image_array[i]);
+						else
+							delete[] reinterpret_cast<uint32_t*>(image_array[i]);
+					}
+
+					DEB_TRACE() << "Freeing images array";
+					if(m_pixel_depth == B2)
+						delete[] reinterpret_cast<uint16_t**>(image_array);
+					else//B4
+						delete[] reinterpret_cast<uint32_t**>(image_array);
+
+					m_status = Camera::Fault;
+                    throw LIMA_HW_EXC(Error, "xpci_getImgSeq as returned an error ! ");
+				}
+
+				m_status = Camera::Readout;
+
+				DEB_TRACE() 	<< "\n#######################"
+								<< "\nall images are acquired"
+								<< "\n#######################" ;
+
+				int	i=0;
+
+				//- Publish each image and call new frame ready for each frame
+				StdBufferCbMgr& buffer_mgr = m_buffer_cb_mgr;
+				DEB_TRACE() <<"Publish each acquired image through newFrameReady()";
+				for(i=0; i<one_frame; i++)
+				{
+                    m_current_nb_frames = i;
+					int buffer_nb, concat_frame_nb;
+					buffer_mgr.setStartTimestamp(Timestamp::now());
+					buffer_mgr.acqFrameNb2BufferNb(i, buffer_nb, concat_frame_nb);
+
+					void* lima_img_ptr;
+					if(m_pixel_depth == B2)
+						lima_img_ptr = (uint16_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
+					else//B4
+						lima_img_ptr = (uint32_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
+
+					//- copy image in the lima buffer
+					if(m_pixel_depth == B2)
+						memcpy((uint16_t *)lima_img_ptr, (uint16_t *)image_array[i],m_full_image_size_in_bytes);
+					else//B4
+						memcpy((uint32_t *)lima_img_ptr, (uint32_t *)image_array[i],m_full_image_size_in_bytes);
+
+					DEB_TRACE() << "image# " << i <<" cleaned" ;
+					HwFrameInfoType frame_info;
+					frame_info.acq_frame_nb = i;
+					//- raise the image to Lima
+					buffer_mgr.newFrameReady(frame_info);
+				}
+
+				DEB_TRACE() <<"Freeing every image pointer of the images array";
+				for(int i=0 ; i < one_frame ; i++)
+				{
+					if(m_pixel_depth == B2)
+						delete[] reinterpret_cast<uint16_t*>(image_array[i]);
+					else
+						delete[] reinterpret_cast<uint32_t*>(image_array[i]);
+				}
+
+				DEB_TRACE() << "Freeing images array";
+				if(m_pixel_depth == B2)
+					delete[] reinterpret_cast<uint16_t**>(image_array);
+				else//B4
+					delete[] reinterpret_cast<uint32_t**>(image_array);
+
+				m_status = Camera::Ready;
+				DEB_TRACE() <<"m_status is Ready";
+
+                if (m_stop_asked == false)
+                {
+                    //- Post XPAD_DLL_START_LIVE_ACQ_MSG msg
+		            this->post(new yat::Message(XPAD_DLL_START_LIVE_ACQ_MSG), kPOST_MSG_TMO);
+                }
+			}
+			break;          
 
 			//-----------------------------------------------------    
 			case XPAD_DLL_START_ASYNC_MSG:
@@ -768,11 +922,11 @@ void Camera::setExposureParameters( unsigned Texp,unsigned Twait,unsigned Tinit,
 	                          nbImages, BusyOutSel, formatIMG, postProc,
 	                          GP1, GP2, GP3, GP4) == 0)
 	{
-		DEB_TRACE() << "setExposureParameters -> OK" ;
+		DEB_TRACE() << "setExposureParameters (xpci_modExposureParam) -> OK" ;
 	}
 	else
 	{
-		throw LIMA_HW_EXC(Error, "Error in setExposureParameters!");
+		throw LIMA_HW_EXC(Error, "Error in setExposureParameters! (xpci_modExposureParam)");
 	}
 }
 
@@ -832,14 +986,14 @@ void Camera::loadAllConfigG(unsigned long modNum, unsigned long chipId , unsigne
 			                                    config_values[9],//- ITUNE, 
 			                                    config_values[10]//- IBUFFER
 		                        ) == 0)
-		{
-			DEB_TRACE() << "loadAllConfigG for module " << modNum  << ", and chip " << chipId << " -> OK" ;
-			DEB_TRACE() << "(loadAllConfigG for mask_local_module " << mask_local_module  << ", and mask_local_chip " << mask_local_chip << " )" ;
-		}
-		else
-		{
-			throw LIMA_HW_EXC(Error, "Error in loadAllConfigG!");
-		}
+	{
+		DEB_TRACE() << "loadAllConfigG for module " << modNum  << ", and chip " << chipId << " -> OK" ;
+		DEB_TRACE() << "(loadAllConfigG for mask_local_module " << mask_local_module  << ", and mask_local_chip " << mask_local_chip << " )" ;
+	}
+	else
+	{
+		throw LIMA_HW_EXC(Error, "Error in loadAllConfigG!");
+	}
 }
 
 //-----------------------------------------------------
@@ -875,9 +1029,7 @@ void Camera::loadAutoTest(unsigned known_value)
 	{
 		throw LIMA_HW_EXC(Error, "Error in loadAutoTest!");
 	}
-
 }
-
 
 //-----------------------------------------------------
 //		Save the config L (DACL) to XPAD RAM

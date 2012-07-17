@@ -34,6 +34,8 @@
 
 const size_t  XPAD_DLL_START_SYNC_MSG		=	(yat::FIRST_USER_MSG + 100);
 const size_t  XPAD_DLL_START_ASYNC_MSG		=	(yat::FIRST_USER_MSG + 101);
+const size_t  XPAD_DLL_START_LIVE_ACQ_MSG	=	(yat::FIRST_USER_MSG + 102);
+
 
 
 ///////////////////////////////////////////////////////////
@@ -101,6 +103,7 @@ namespace Xpad
 		BufferCtrlMgr& getBufferMgr();
 		void setNbFrames(int  nb_frames);
 		void getNbFrames(int& nb_frames);
+        int getNbHwAcquiredFrames();
 
 		//- Sync 
 		void setTrigMode(TrigMode  mode);
@@ -156,12 +159,14 @@ namespace Xpad
 
 		//- img stuff
 		int 			m_nb_frames;		
+        int 			m_current_nb_frames;
 		Size			m_image_size;
 		IMG_TYPE		m_pixel_depth;
         unsigned int    m_imxpad_format;
         unsigned int    m_imxpad_trigger_mode;
         unsigned int    m_exp_time_usec;
 		int         	m_timeout_ms;
+        bool            m_stop_asked;
 
 
 		//---------------------------------
