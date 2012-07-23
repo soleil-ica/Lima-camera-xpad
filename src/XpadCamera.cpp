@@ -589,7 +589,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
             //-----------------------------------------------------    
 			case XPAD_DLL_START_LIVE_ACQ_MSG:
 			{
-								DEB_TRACE() 	<< "========================================="
+				DEB_TRACE() 	<< "=========================================";
                 DEB_TRACE() <<"Camera::->XPAD_DLL_START_LIVE_ACQ_MSG";
 
 				int one_frame = 1;
