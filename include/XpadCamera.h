@@ -35,6 +35,7 @@
 const size_t  XPAD_DLL_START_SYNC_MSG		=	(yat::FIRST_USER_MSG + 100);
 const size_t  XPAD_DLL_START_ASYNC_MSG		=	(yat::FIRST_USER_MSG + 101);
 const size_t  XPAD_DLL_START_LIVE_ACQ_MSG	=	(yat::FIRST_USER_MSG + 102);
+const size_t  XPAD_DLL_CALIBRATE		    =	(yat::FIRST_USER_MSG + 103);
 
 
 
@@ -44,6 +45,7 @@ const size_t  XPAD_DLL_START_LIVE_ACQ_MSG	=	(yat::FIRST_USER_MSG + 102);
 #include <xpci_interface.h>
 #include <xpci_interface_expert.h>
 #include <xpci_time.h>
+#include <xpci_calib_imxpad.h>
 
 #include <stdlib.h>
 #include <limits>
@@ -70,19 +72,24 @@ namespace Xpad
 	* \class Camera
 	* \brief object controlling the xpad detector via xpix driver
 	*******************************************************************/
-	class Camera : public HwMaxImageSizeCallbackGen, public yat::Task
+	class Camera : public yat::Task
 	{
 		DEB_CLASS_NAMESPC(DebModCamera, "Camera", "Xpad");
 
 	public:
 
 		enum Status {
-			Ready, Exposure, Readout,Fault
+			Ready, Exposure, Readout,Fault,Calibrating
 		};
 
         enum XpadAcqType {
 	                SYNC = 0,
 	                ASYNC
+		};
+
+        enum CalibrationType {
+	                OTN_SLOW = 0,
+	                OTN_MEDIUM
 		};
 
 		Camera(string xpad_type);
@@ -143,9 +150,17 @@ namespace Xpad
 			                        unsigned Tshutter,unsigned Tovf,unsigned mode, unsigned n,unsigned p,
 		                            unsigned nbImages,unsigned BusyOutSel,unsigned formatIMG,unsigned postProc,
 		                            unsigned GP1,unsigned GP2,unsigned GP3,unsigned GP4);
+        //! Calibrate over the noise Slow and save dacl and configg files in path
+        void calibrateOTNSlow (string path);
+        //! Calibrate over the noise Medium and save dacl and configg files in path
+        void calibrateOTNMedium (string path);
+        //! Calibrate over the noise High and save dacl and configg files in path
+        void calibrateOTNHigh (string path);
+        //! upload the calibration (dacl + config) that is stored in path
+        void uploadCalibration(string path);
 
-	protected:
-		virtual void setMaxImageSizeCallbackActive(bool cb_active);	
+
+
 
 		//- yat::Task implementation
 	protected: 
@@ -155,7 +170,6 @@ namespace Xpad
 		SoftBufferAllocMgr 	m_buffer_alloc_mgr;
 		StdBufferCbMgr 		m_buffer_cb_mgr;
 		BufferCtrlMgr 		m_buffer_ctrl_mgr;
-		bool 				m_mis_cb_act;
 
 		//- img stuff
 		int 			m_nb_frames;		
@@ -172,12 +186,14 @@ namespace Xpad
 		//---------------------------------
 		//- xpad stuff 
         Camera::XpadAcqType		m_acquisition_type;
+        Camera::CalibrationType m_calibration_type;
         unsigned int	        m_modules_mask;
         int				        m_module_number;
         unsigned int	        m_chip_number;
         int				        m_full_image_size_in_bytes;
         vector<long>	        m_all_config_g;
         unsigned short 			m_xpad_model;
+        string                  m_calibration_path;
         //unsigned short*         m_dacl;
 
         //---------------------------------
