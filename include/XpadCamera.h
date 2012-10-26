@@ -46,6 +46,7 @@ const size_t  XPAD_DLL_CALIBRATE		    =	(yat::FIRST_USER_MSG + 103);
 #include <xpci_interface_expert.h>
 #include <xpci_time.h>
 #include <xpci_calib_imxpad.h>
+#include <xpci_imxpad.h>
 
 #include <stdlib.h>
 #include <limits>
@@ -89,7 +90,10 @@ namespace Xpad
 
         enum CalibrationType {
 	                OTN_SLOW = 0,
-	                OTN_MEDIUM
+	                OTN_MEDIUM,
+			OTN_HIGH,
+			BEAM,
+			UPLOAD
 		};
 
 		Camera(string xpad_type);
@@ -158,6 +162,17 @@ namespace Xpad
         void calibrateOTNHigh (string path);
         //! upload the calibration (dacl + config) that is stored in path
         void uploadCalibration(string path);
+        //! upload the wait times between each images in case of a sequence of images (Twait from setExposureParameters should be 0)
+        void uploadExpWaitTimes(unsigned long *pWaitTime, unsigned size);
+        //! increment the ITHL
+        void incrementITHL();
+        //! decrement the ITHL
+        void decrementITHL();
+        //! set the specific parameters (deadTime,init time, shutter ...
+        void setSpecificParameters( unsigned deadtime, unsigned init,
+								    unsigned shutter, unsigned ovf,
+								    unsigned n,       unsigned p,
+								    unsigned GP1,     unsigned GP2,    unsigned GP3,      unsigned GP4);
 
 
 
@@ -195,6 +210,17 @@ namespace Xpad
         unsigned short 			m_xpad_model;
         string                  m_calibration_path;
         //unsigned short*         m_dacl;
+        //- Specific xpad stuff
+        unsigned int m_time_between_images_usec; //- Temps entre chaque image
+        unsigned int m_time_before_start_usec;     //- Temps initial
+        unsigned int m_shutter_time_usec;
+	    unsigned int m_ovf_refresh_time_usec;
+        unsigned int m_specific_param_n;
+        unsigned int m_specific_param_p;
+        unsigned int m_specific_param_GP1;
+	    unsigned int m_specific_param_GP2;
+	    unsigned int m_specific_param_GP3;
+	    unsigned int m_specific_param_GP4;
 
         //---------------------------------
         Camera::Status	m_status;

@@ -121,7 +121,7 @@ void DetInfoCtrlObj::getDetectorModel(std::string& model)
 void DetInfoCtrlObj::registerMaxImageSizeCallback(HwMaxImageSizeCallback& cb)
 {
     DEB_MEMBER_FUNCT();
-    m_cam.registerMaxImageSizeCallback(cb);
+    //m_cam.registerMaxImageSizeCallback(cb);
 }
 
 //-----------------------------------------------------
@@ -130,7 +130,7 @@ void DetInfoCtrlObj::registerMaxImageSizeCallback(HwMaxImageSizeCallback& cb)
 void DetInfoCtrlObj::unregisterMaxImageSizeCallback(HwMaxImageSizeCallback& cb)
 {
     DEB_MEMBER_FUNCT();
-    m_cam.unregisterMaxImageSizeCallback(cb);
+    //m_cam.unregisterMaxImageSizeCallback(cb);
 }
 
 
@@ -465,8 +465,8 @@ void Interface::getStatus(StatusType& status)
 	switch (xpad_status)
 	{
 		case Camera::Ready:
-			status.acq = AcqReady;
 			status.det = DetIdle;
+            status.acq = AcqReady;
 			break;
 		case Camera::Exposure:
 			status.det = DetExposure;
@@ -480,6 +480,10 @@ void Interface::getStatus(StatusType& status)
 		  	status.det = DetFault;
 		  	status.acq = AcqFault;
 			break;
+        /*case Camera::Calibrating:
+		  	status.det = DetExposure;
+		  	status.acq = AcqConfig;
+			break;*/
 	}
 	status.det_mask = DetExposure | DetReadout ;
 }
