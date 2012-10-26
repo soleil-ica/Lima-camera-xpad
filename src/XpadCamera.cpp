@@ -75,14 +75,12 @@ m_nb_frames(1)
 		    DEB_TRACE() << "Ask modules that are ready: OK (modules mask = " << std::hex << m_modules_mask << ")" ;
 		    m_module_number = xpci_getModNb(m_modules_mask);
             
-		    if (m_module_number !=0)
+		    if (m_module_number != 0)
 		    {
 			    DEB_TRACE() << "--> Number of Modules 		 = " << m_module_number ;			
 		    }
 		    else
 		    {
-			    /*DEB_TRACE() << "Reseting detector ... ";
-			    this->reset();*/
 			    DEB_ERROR() << "No modules found: retry to Init" ;
 			    //- Test if PCIe is OK
 			    if(xpci_isPCIeOK() == 0) 
@@ -140,7 +138,7 @@ void Camera::start()
 	DEB_MEMBER_FUNCT();
 
     m_stop_asked = false;
-		unsigned long local_nb_frames = 0;
+	unsigned long local_nb_frames = 0;
 
     //-	((80 colonnes * 7 chips) * taille du pixel) * 120 lignes * nb_modules
 	if (m_pixel_depth == B2)
@@ -161,29 +159,25 @@ void Camera::start()
 	DEB_TRACE() << "\tm_nb_frames (before live mode check)			= " << m_nb_frames;
 	DEB_TRACE() << "\tm_imxpad_format 		= " << m_imxpad_format;
 
-		//- Check if live mode
-		if (m_nb_frames == 0) //- ie live mode
-			local_nb_frames = 1;
-		else
-			local_nb_frames = m_nb_frames;
+	//- Check if live mode
+	if (m_nb_frames == 0) //- ie live mode
+		local_nb_frames = 1;
+	else
+		local_nb_frames = m_nb_frames;
 
-		DEB_TRACE() << "\tlocal_nb_frames (after live mode check)			= " << local_nb_frames;
+	DEB_TRACE() << "\tlocal_nb_frames (after live mode check)       = " << local_nb_frames;
 		
 
 	//- call the setExposureParameters
-    //- hard coded params (until needed)
-	unsigned long time_between_images_usec = 5000;
-	unsigned long ovf_refresh_time_usec = 4000;
-    unsigned long time_before_start_usec = 0;
-    unsigned long shutter_time_usec = 0;
+    
 
     //m_xpad_model parameter must be 1 (in our detector type IMXPAD_S140) or XPIX_NOT_USED_YET
     //maybe library must manage this, we can provide IMXPAD_Sxx to this function if necessary
 	setExposureParameters(	m_exp_time_usec,
-							time_between_images_usec,
-							time_before_start_usec,
-							shutter_time_usec,
-							ovf_refresh_time_usec,
+							m_time_between_images_usec,
+							m_time_before_start_usec,
+							m_shutter_time_usec,
+							m_ovf_refresh_time_usec,
 							m_imxpad_trigger_mode,
 							XPIX_NOT_USED_YET,
 							XPIX_NOT_USED_YET,
@@ -197,10 +191,10 @@ void Camera::start()
 							XPIX_NOT_USED_YET);
 
 
-		if (m_nb_frames == 0) //- aka live mode
+	if (m_nb_frames == 0) //- aka live mode
     {
         //- Post XPAD_DLL_START_LIVE_ACQ_MSG msg
-			this->post(new yat::Message(XPAD_DLL_START_LIVE_ACQ_MSG), kPOST_MSG_TMO);
+		this->post(new yat::Message(XPAD_DLL_START_LIVE_ACQ_MSG), kPOST_MSG_TMO);
     }
     else if(m_acquisition_type == Camera::SYNC)
 	{
@@ -283,13 +277,13 @@ void Camera::setPixelDepth(ImageType pixel_depth)
 void Camera::getPixelDepth(ImageType& pixel_depth)
 {
 	DEB_MEMBER_FUNCT();
-	switch( m_pixel_depth )
+	switch( m_imxpad_format )
 	{
-	case B2:
+	case 0:
 		pixel_depth = Bpp16;
 		break;
 
-	case B4:
+	case 1:
 		pixel_depth = Bpp32;
 		break;	
 	}
@@ -316,14 +310,6 @@ void Camera::getDetectorModel(string& type)
 	else if(m_xpad_model == IMXPAD_S340) type = "IMXPAD_S340";
 	else if(m_xpad_model == IMXPAD_S540) type = "IMXPAD_S540";
     else throw LIMA_HW_EXC(Error, "Xpad Type not supported");
-}
-
-//-----------------------------------------------------
-//
-//-----------------------------------------------------
-void Camera::setMaxImageSizeCallbackActive(bool cb_active)
-{  
-	m_mis_cb_act = cb_active;
 }
 
 //-----------------------------------------------------
@@ -481,23 +467,23 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				DEB_TRACE() <<"Camera::->XPAD_DLL_START_SYNC_MSG";
 
 				//- A mettre dans le prepareAcq?
-
+                
 				//- Declare local temporary image buffer
 				void**	image_array;
 
 				// allocate multiple buffers
 				DEB_TRACE() <<"Allocating images array (" << m_nb_frames << " images)";
-				if(m_pixel_depth == B2)
+				if(m_imxpad_format == 0) //- aka 16 bits
 					image_array = reinterpret_cast<void**>(new uint16_t* [ m_nb_frames ]);
-				else//B4
+				else //- aka 32 bits
 					image_array = reinterpret_cast<void**>(new uint32_t* [ m_nb_frames ]);
-
-				DEB_TRACE() <<"Allocating every image pointer of the images array (1 image full size = "<< m_full_image_size_in_bytes << ") ";
+                
+                		DEB_TRACE() <<"Allocating every image pointer of the images array (1 image full size = "<< m_full_image_size_in_bytes << ") ";
 				for( int i=0 ; i < m_nb_frames ; i++ )
 				{
-					if(m_pixel_depth == B2)
+					if(m_imxpad_format == 0) //- aka 16 bits
 						image_array[i] = new uint16_t [ m_full_image_size_in_bytes / 2 ];//we allocate a number of pixels
-					else //B4
+					else //- aka 32 bits
 						image_array[i] = new uint32_t [ m_full_image_size_in_bytes / 4 ];//we allocate a number of pixels
 				}
 
@@ -509,17 +495,17 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				if ( xpci_getImgSeq(	m_pixel_depth, 
 					                    m_modules_mask,
 					                    m_chip_number,
-                                        			m_nb_frames,
-                                        			(void**)image_array,
-                                        			// next are ignored in V2:
-                                        			XPIX_V1_COMPATIBILITY,
+                            			m_nb_frames,
+                            			(void**)image_array,
+                            			// next are ignored in V2:
+                            			XPIX_V1_COMPATIBILITY,
 					                    XPIX_V1_COMPATIBILITY,
 					                    XPIX_V1_COMPATIBILITY,
 					                    XPIX_V1_COMPATIBILITY) == -1)
 				{
-					DEB_ERROR() << "Error: getImgSeq as returned an error..." ;
+					DEB_ERROR() << "Error: xpci_getImgSeq as returned an error..." ;
 
-					DEB_TRACE() << "Freeing every image pointer of the images array";
+					DEB_TRACE() << "Freeing each image pointer of the images array";
 					for(int i=0 ; i < m_nb_frames ; i++)
 					{
 						if(m_pixel_depth == B2)
@@ -528,10 +514,10 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 							delete[] reinterpret_cast<uint32_t*>(image_array[i]);
 					}
 
-					DEB_TRACE() << "Freeing images array";
-					if(m_pixel_depth == B2)
+					DEB_TRACE() << "Freeing the images array";
+					if(m_imxpad_format == 0) //- aka 16 bits
 						delete[] reinterpret_cast<uint16_t**>(image_array);
-					else//B4
+					else //- aka 32 bits
 						delete[] reinterpret_cast<uint32_t**>(image_array);
 
 					m_status = Camera::Fault;
@@ -557,25 +543,26 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 					buffer_mgr.acqFrameNb2BufferNb(i, buffer_nb, concat_frame_nb);
 
 					void* lima_img_ptr;
-					if(m_pixel_depth == B2)
+					if(m_imxpad_format == 0) //- aka 16 bits
 						lima_img_ptr = (uint16_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
-					else//B4
+					else //- aka 32 bits
 						lima_img_ptr = (uint32_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
 
 					//- copy image in the lima buffer
-					if(m_pixel_depth == B2)
+					if(m_imxpad_format == 0) //- aka 16 bits
 						memcpy((uint16_t *)lima_img_ptr, (uint16_t *)image_array[i],m_full_image_size_in_bytes);
-					else//B4
+					else //- aka 32 bits
 						memcpy((uint32_t *)lima_img_ptr, (uint32_t *)image_array[i],m_full_image_size_in_bytes);
 
-					DEB_TRACE() << "image# " << i <<" cleaned" ;
 					HwFrameInfoType frame_info;
 					frame_info.acq_frame_nb = i;
 					//- raise the image to Lima
 					buffer_mgr.newFrameReady(frame_info);
+                    DEB_TRACE() << "image " << i <<" published with newFrameReady()" ;
 				}
 
 				DEB_TRACE() <<"Freeing every image pointer of the images array";
+                //- they were allocated by the xpci_getImgSeq function
 				for(i=0 ; i < m_nb_frames ; i++)
 					delete[] image_array[i];
 				DEB_TRACE() <<"Freeing images array";
@@ -894,10 +881,58 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				  m_status = Camera::Ready;
 				  DEB_TRACE() <<"m_status is Ready";
 			
-***************/
+                    */
 		  }
 		  break;
-	}
+
+            case XPAD_DLL_CALIBRATE:
+                {
+                    DEB_TRACE() <<"Camera::->XPAD_DLL_CALIBRATE";
+
+                    m_status = Camera::Exposure;
+
+                    switch (m_calibration_type)
+                    {
+                        //-----------------------------------------------------	
+                    case Camera::OTN_SLOW:
+                        {
+                            DEB_TRACE() <<"XPAD_DLL_CALIBRATE->OTN_SLOW";    
+
+                            if(imxpad_calibrationOTN_SLOW(m_modules_mask,(char*)m_calibration_path.c_str()) == 0)
+                            {
+                                DEB_TRACE() << "calibrateOTNSlow -> imxpad_calibrationOTN_SLOW -> OK" ;
+                            }
+                            else
+                            {
+                                m_status = Camera::Fault;
+                                //- TODO: get the xpix error 
+                                throw LIMA_HW_EXC(Error, "Error in imxpad_calibrationOTN_SLOW!");
+                            }
+                        }
+                        break;
+
+                         //-----------------------------------------------------	
+                    case Camera::UPLOAD:
+                        {
+                            DEB_TRACE() <<"XPAD_DLL_CALIBRATE->UPLOAD";    
+
+                            if(imxpad_uploadCalibration(m_modules_mask,(char*)m_calibration_path.c_str()) == 0)
+                            {
+                                DEB_TRACE() << "uploadCalibration -> imxpad_uploadCalibration -> OK" ;
+                            }
+                            else
+                            {
+                                m_status = Camera::Fault;
+                                //- TODO: get the xpix error 
+                                throw LIMA_HW_EXC(Error, "Error in imxpad_uploadCalibration!");
+                            }
+                        }
+                        break;
+                    }
+                    m_status = Camera::Ready;
+                }
+                break;
+		}
   }
   catch( yat::Exception& ex )
   {
@@ -909,8 +944,8 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 //-----------------------------------------------------
 //      setExposureParam
 //-----------------------------------------------------
-void Camera::setExposureParameters( unsigned Texp,unsigned Twait,unsigned Tinit,
-			                         unsigned Tshutter,unsigned Tovf,unsigned mode, unsigned n,unsigned p,
+void Camera::setExposureParameters(  unsigned Texp,unsigned Twait,unsigned Tinit,
+			                         unsigned Tshutter,unsigned Tovf,unsigned trigger_mode, unsigned n,unsigned p,
 			                         unsigned nbImages,unsigned BusyOutSel,unsigned formatIMG,unsigned postProc,
 			                         unsigned GP1,unsigned GP2,unsigned GP3,unsigned GP4)
 {
@@ -918,7 +953,7 @@ void Camera::setExposureParameters( unsigned Texp,unsigned Twait,unsigned Tinit,
 	DEB_MEMBER_FUNCT();
 
     if (xpci_modExposureParam(m_modules_mask, Texp, Twait, Tinit,
-	                          Tshutter, Tovf, mode,  n, p,
+	                          Tshutter, Tovf, trigger_mode,  n, p,
 	                          nbImages, BusyOutSel, formatIMG, postProc,
 	                          GP1, GP2, GP3, GP4) == 0)
 	{
@@ -1139,4 +1174,112 @@ void Camera::reset()
 	{
 		throw LIMA_HW_EXC(Error, "Error in xpci_modRebootNIOS!");
 	}
+}
+
+//-----------------------------------------------------
+//		calibrate over the noise Slow
+//-----------------------------------------------------
+void Camera::calibrateOTNSlow ( string path)
+{
+    DEB_MEMBER_FUNCT();
+
+    m_calibration_path = path;
+    m_calibration_type = Camera::OTN_SLOW;
+
+    this->post(new yat::Message(XPAD_DLL_CALIBRATE), kPOST_MSG_TMO);
+}
+
+//-----------------------------------------------------
+//		upload a calibration
+//-----------------------------------------------------
+void Camera::uploadCalibration(string path)
+{
+    DEB_MEMBER_FUNCT();
+
+    m_calibration_path = path;
+    m_calibration_type = Camera::UPLOAD;
+
+    this->post(new yat::Message(XPAD_DLL_CALIBRATE), kPOST_MSG_TMO);
+}
+
+//-----------------------------------------------------
+//		upload the wait times between images
+//-----------------------------------------------------
+void Camera::uploadExpWaitTimes(unsigned long *pWaitTime, unsigned size)
+{
+    DEB_MEMBER_FUNCT();
+
+    //- Check the number of values
+    if (size != m_nb_frames)
+    {
+        throw LIMA_HW_EXC(Error, "Error in uploadExpWaitTimes: number of values does not correspond to number of images");
+    }
+
+    if(imxpad_uploadExpWaitTimes(m_modules_mask,(unsigned int*)pWaitTime,size) == 0)
+	{
+        DEB_TRACE() << "reset -> imxpad_uploadExpWaitTimes -> OK" ;
+	}
+	else
+	{
+		throw LIMA_HW_EXC(Error, "Error in imxpad_uploadExpWaitTimes!");
+	}
+}
+
+//-----------------------------------------------------
+//		increment the ITHL
+//-----------------------------------------------------
+void Camera::incrementITHL()
+{
+    DEB_MEMBER_FUNCT();
+
+    if(imxpad_incrITHL(m_modules_mask) == 0)
+	{
+        DEB_TRACE() << "reset -> imxpad_incrITHL -> OK" ;
+	}
+	else
+	{
+		throw LIMA_HW_EXC(Error, "Error in imxpad_incrITHL!");
+	}
+}
+
+//-----------------------------------------------------
+//		decrement the ITHL
+//-----------------------------------------------------
+void Camera::decrementITHL()
+{
+    DEB_MEMBER_FUNCT();
+
+    if(imxpad_decrITHL(m_modules_mask) == 0)
+	{
+        DEB_TRACE() << "reset -> imxpad_decrITHL -> OK" ;
+	}
+	else
+	{
+		throw LIMA_HW_EXC(Error, "Error in imxpad_decrITHL!");
+	}
+}
+
+//-----------------------------------------------------
+//		Set the specific parameters
+//-----------------------------------------------------
+void Camera::setSpecificParameters( unsigned deadtime, unsigned init,
+								    unsigned shutter, unsigned ovf,
+								    unsigned n,       unsigned p,
+								    unsigned GP1,     unsigned GP2,    unsigned GP3,      unsigned GP4)
+{
+
+	DEB_MEMBER_FUNCT();
+
+	DEB_TRACE() << "Setting Specific Parameters ..." ;
+    
+	m_time_between_images_usec  = deadtime; //- Temps entre chaque image
+    m_time_before_start_usec    = init;     //- Temps initial
+    m_shutter_time_usec         = shutter;
+	m_ovf_refresh_time_usec     = ovf;
+    m_specific_param_n          = n;
+    m_specific_param_p          = p;
+    m_specific_param_GP1		= GP1;
+	m_specific_param_GP2		= GP2;
+	m_specific_param_GP3		= GP3;
+	m_specific_param_GP4		= GP4;
 }
