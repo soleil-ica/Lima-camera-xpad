@@ -1217,7 +1217,7 @@ void Camera::uploadExpWaitTimes(unsigned long *pWaitTime, unsigned size)
 
     if(imxpad_uploadExpWaitTimes(m_modules_mask,(unsigned int*)pWaitTime,size) == 0)
 	{
-        DEB_TRACE() << "reset -> imxpad_uploadExpWaitTimes -> OK" ;
+        DEB_TRACE() << "uploadExpWaitTimes -> imxpad_uploadExpWaitTimes -> OK" ;
 	}
 	else
 	{
@@ -1234,7 +1234,7 @@ void Camera::incrementITHL()
 
     if(imxpad_incrITHL(m_modules_mask) == 0)
 	{
-        DEB_TRACE() << "reset -> imxpad_incrITHL -> OK" ;
+        DEB_TRACE() << "incrementITHL -> imxpad_incrITHL -> OK" ;
 	}
 	else
 	{
@@ -1251,7 +1251,7 @@ void Camera::decrementITHL()
 
     if(imxpad_decrITHL(m_modules_mask) == 0)
 	{
-        DEB_TRACE() << "reset -> imxpad_decrITHL -> OK" ;
+        DEB_TRACE() << "decrementITHL -> imxpad_decrITHL -> OK" ;
 	}
 	else
 	{
