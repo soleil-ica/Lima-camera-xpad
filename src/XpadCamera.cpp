@@ -29,11 +29,6 @@ using namespace lima;
 using namespace lima::Xpad;
 using namespace std;
 
-
-//- Const.
-static const int 	BOARDNUM 	= 0;
-
-
 //---------------------------
 //- Ctor
 //---------------------------
@@ -123,6 +118,13 @@ Camera::~Camera()
 {
 	DEB_DESTRUCTOR();
 
+    //- exit m_xpad_task
+	if(m_xpad_task)
+	{
+		m_xpad_task->exit();
+		m_xpad_task = 0;
+	}
+
 	//- close the xpix driver
 	xpci_close(0);
 	DEB_TRACE() << "XPCI Lib closed";
@@ -167,10 +169,7 @@ void Camera::start()
 
 	DEB_TRACE() << "\tlocal_nb_frames (after live mode check)       = " << local_nb_frames;
 		
-
 	//- call the setExposureParameters
-    
-
     //m_xpad_model parameter must be 1 (in our detector type IMXPAD_S140) or XPIX_NOT_USED_YET
     //maybe library must manage this, we can provide IMXPAD_Sxx to this function if necessary
 	setExposureParameters(	m_exp_time_usec,
@@ -194,17 +193,17 @@ void Camera::start()
 	if (m_nb_frames == 0) //- aka live mode
     {
         //- Post XPAD_DLL_START_LIVE_ACQ_MSG msg
-		this->post(new yat::Message(XPAD_DLL_START_LIVE_ACQ_MSG), kPOST_MSG_TMO);
+        m_xpad_task->post(new yat::Message(XPAD_DLL_START_LIVE_ACQ_MSG));
     }
     else if(m_acquisition_type == Camera::SYNC)
 	{
 		//- Post XPAD_DLL_START_SYNC_MSG msg
-		this->post(new yat::Message(XPAD_DLL_START_SYNC_MSG), kPOST_MSG_TMO);
+        m_xpad_task->post(new yat::Message(XPAD_DLL_START_SYNC_MSG));
 	}
 	else if (m_acquisition_type == Camera::ASYNC)
 	{
 		//- Post XPAD_DLL_START_ASYNC_MSG msg
-		this->post(new yat::Message(XPAD_DLL_START_ASYNC_MSG), kPOST_MSG_TMO);
+        m_xpad_task->post(new yat::Message(XPAD_DLL_START_ASYNC_MSG));
 	}
 	else
 	{
