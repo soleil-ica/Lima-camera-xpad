@@ -435,6 +435,7 @@ void Interface::reset(ResetLevel reset_level)
 void Interface::prepareAcq()
 {
 	DEB_MEMBER_FUNCT();
+    m_cam.prepare();
 }
 
 //-----------------------------------------------------
