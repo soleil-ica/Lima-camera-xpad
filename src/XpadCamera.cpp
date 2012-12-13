@@ -29,6 +29,11 @@ using namespace lima;
 using namespace lima::Xpad;
 using namespace std;
 
+
+//- Const.
+static const int 	BOARDNUM 	= 0;
+
+
 //---------------------------
 //- Ctor
 //---------------------------
@@ -118,13 +123,6 @@ Camera::~Camera()
 {
 	DEB_DESTRUCTOR();
 
-    //- exit m_xpad_task
-	if(m_xpad_task)
-	{
-		m_xpad_task->exit();
-		m_xpad_task = 0;
-	}
-
 	//- close the xpix driver
 	xpci_close(0);
 	DEB_TRACE() << "XPCI Lib closed";
@@ -193,17 +191,17 @@ void Camera::start()
 	if (m_nb_frames == 0) //- aka live mode
     {
         //- Post XPAD_DLL_START_LIVE_ACQ_MSG msg
-        m_xpad_task->post(new yat::Message(XPAD_DLL_START_LIVE_ACQ_MSG));
+		this->post(new yat::Message(XPAD_DLL_START_LIVE_ACQ_MSG), kPOST_MSG_TMO);
     }
     else if(m_acquisition_type == Camera::SYNC)
 	{
 		//- Post XPAD_DLL_START_SYNC_MSG msg
-        m_xpad_task->post(new yat::Message(XPAD_DLL_START_SYNC_MSG));
+		this->post(new yat::Message(XPAD_DLL_START_SYNC_MSG), kPOST_MSG_TMO);
 	}
 	else if (m_acquisition_type == Camera::ASYNC)
 	{
 		//- Post XPAD_DLL_START_ASYNC_MSG msg
-        m_xpad_task->post(new yat::Message(XPAD_DLL_START_ASYNC_MSG));
+		this->post(new yat::Message(XPAD_DLL_START_ASYNC_MSG), kPOST_MSG_TMO);
 	}
 	else
 	{

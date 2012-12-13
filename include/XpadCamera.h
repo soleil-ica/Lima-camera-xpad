@@ -22,12 +22,22 @@
 #ifndef XPADCAMERA_H
 #define XPADCAMERA_H
 
-#include "XpadTask.h"
+///////////////////////////////////////////////////////////
+// YAT::TASK 
+///////////////////////////////////////////////////////////
+#include <yat/threading/Task.h>
+
+#define kLO_WATER_MARK      128
+#define kHI_WATER_MARK      512
+
+#define kPOST_MSG_TMO       2
 
 const size_t  XPAD_DLL_START_SYNC_MSG		=	(yat::FIRST_USER_MSG + 100);
 const size_t  XPAD_DLL_START_ASYNC_MSG		=	(yat::FIRST_USER_MSG + 101);
 const size_t  XPAD_DLL_START_LIVE_ACQ_MSG	=	(yat::FIRST_USER_MSG + 102);
 const size_t  XPAD_DLL_CALIBRATE		    =	(yat::FIRST_USER_MSG + 103);
+
+
 
 ///////////////////////////////////////////////////////////
 
@@ -63,7 +73,7 @@ namespace Xpad
 	* \class Camera
 	* \brief object controlling the xpad detector via xpix driver
 	*******************************************************************/
-	class Camera
+	class Camera : public yat::Task
 	{
 		DEB_CLASS_NAMESPC(DebModCamera, "Camera", "Xpad");
 
@@ -81,9 +91,9 @@ namespace Xpad
         enum CalibrationType {
 	                OTN_SLOW = 0,
 	                OTN_MEDIUM,
-			        OTN_HIGH,
-			        BEAM,
-			        UPLOAD
+			OTN_HIGH,
+			BEAM,
+			UPLOAD
 		};
 
         //- CTOR/DTOR
@@ -170,11 +180,10 @@ namespace Xpad
 
 
 
-		
+		//- yat::Task implementation
+	protected: 
+		virtual void handle_message( yat::Message& msg )throw (yat::Exception);
 	private:
-		
-        XpadTask*           m_xpad_task;
-
 		//- lima stuff
 		SoftBufferAllocMgr 	m_buffer_alloc_mgr;
 		StdBufferCbMgr 		m_buffer_cb_mgr;
