@@ -893,9 +893,11 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                         //-----------------------------------------------------	
                     case Camera::OTN_SLOW:
                         {
-                            DEB_TRACE() <<"XPAD_DLL_CALIBRATE->OTN_SLOW";    
+                            DEB_TRACE() <<"XPAD_DLL_CALIBRATE->OTN_SLOW";   
+					
+							unsigned number_of_iteration = 20;
 
-                            if(imxpad_calibrationOTN_SLOW(m_modules_mask,(char*)m_calibration_path.c_str()) == 0)
+                            if(imxpad_calibrationOTN_SLOW(m_modules_mask,(char*)m_calibration_path.c_str(),number_of_iteration) == 0)
                             {
                                 DEB_TRACE() << "calibrateOTNSlow -> imxpad_calibrationOTN_SLOW -> OK" ;
                             }
@@ -941,7 +943,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 //-----------------------------------------------------
 //      setExposureParam
 //-----------------------------------------------------
-void Camera::setExposureParameters(  unsigned Texp,unsigned Twait,unsigned Tinit,
+void Camera::setExposureParameters( unsigned Texp,unsigned Twait,unsigned Tinit,
 			                         unsigned Tshutter,unsigned Tovf,unsigned trigger_mode, unsigned n,unsigned p,
 			                         unsigned nbImages,unsigned BusyOutSel,unsigned formatIMG,unsigned postProc,
 			                         unsigned GP1,unsigned GP2,unsigned GP3,unsigned GP4)

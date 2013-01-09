@@ -13,11 +13,12 @@ xpad_specif = DeviceProxy(xpad_specif_device_name)
 print "-> ping(xpad_specif) ",xpad_specif.ping()," us"
 
 ###############################################################
-def test_loop_1_image(number_of_iteration,exposure_time_ms):
+def test_loop_n_image(number_of_images,number_of_iterations,exposure_time_ms):
 	try :
 		xpad_generic.exposureTime = exposure_time_ms
-		for i in range (1,number_of_iteration+1):
-			print "Snaping image %d out of %d" % (i,number_of_iteration)
+		xpad_generic.nbFrames = number_of_images
+		for i in range (1,number_of_iterations+1):
+			print "Snaping %d images of iteration %d out of %d" % (number_of_images,i,number_of_iterations)
 			xpad_generic.Snap()
 			wait_end_acquisition()
 	
