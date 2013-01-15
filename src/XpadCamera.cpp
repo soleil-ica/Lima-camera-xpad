@@ -56,6 +56,7 @@ m_buffer_ctrl_mgr(m_buffer_cb_mgr)
 	m_ovf_refresh_time_usec     = 4000;
     m_time_before_start_usec    = 0;
     m_shutter_time_usec         = 0;
+    m_calibration_adjusting_number = 1;
 
     if		(xpad_model == "BACKPLANE") 	m_xpad_model = BACKPLANE;
     else if	(xpad_model == "IMXPAD_S70")	m_xpad_model = IMXPAD_S70;
@@ -900,10 +901,8 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                     case Camera::OTN_SLOW:
                         {
                             DEB_TRACE() <<"XPAD_DLL_CALIBRATE->OTN_SLOW";   
-					
-							unsigned number_of_iteration = 20;
 
-                            if(imxpad_calibrationOTN_SLOW(m_modules_mask,(char*)m_calibration_path.c_str(),number_of_iteration) == 0)
+                            if(imxpad_calibrationOTN_SLOW(m_modules_mask,(char*)m_calibration_path.c_str(),m_calibration_adjusting_number) == 0)
                             {
                                 DEB_TRACE() << "calibrateOTNSlow -> imxpad_calibrationOTN_SLOW -> OK" ;
                             }
@@ -1287,4 +1286,16 @@ void Camera::setSpecificParameters( unsigned deadtime, unsigned init,
 	m_specific_param_GP2		= GP2;
 	m_specific_param_GP3		= GP3;
 	m_specific_param_GP4		= GP4;
+}
+
+
+//-----------------------------------------------------
+//		decrement the ITHL
+//-----------------------------------------------------
+void Camera::setCalibrationAdjustingNumber(unsigned calibration_adjusting_number)
+{
+    DEB_MEMBER_FUNCT();
+
+    m_calibration_adjusting_number = calibration_adjusting_number;
+
 }

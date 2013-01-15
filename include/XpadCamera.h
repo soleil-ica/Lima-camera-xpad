@@ -177,7 +177,8 @@ namespace Xpad
 								    unsigned n,       unsigned p,
 								    unsigned GP1,     unsigned GP2,    unsigned GP3,      unsigned GP4);
 
-
+        //! Set the Calibration Adjusting number of iteration
+        void setCalibrationAdjustingNumber(unsigned calibration_adjusting_number);
 
 
 		//- yat::Task implementation
@@ -212,6 +213,7 @@ namespace Xpad
         vector<long>	        m_all_config_g;
         unsigned short 			m_xpad_model;
         string                  m_calibration_path;
+        unsigned int            m_calibration_adjusting_number;
         //unsigned short*         m_dacl;
         //- Specific xpad stuff
         unsigned int m_time_between_images_usec; //- Temps entre chaque image
