@@ -22,33 +22,34 @@
 		</dependency>
 	</dependencies>
 
-	<!-- <build>-->
-	<!--	<plugins>-->
-	<!--		<plugin>-->
-	<!--			<groupId>org.freehep</groupId>-->
-	<!--			<artifactId>freehep-nar-plugin</artifactId>-->
- 	<!--			<configuration> -->
- 	<!--			<cpp> -->
- 	<!--				<systemIncludePaths> -->
- 						<!--<systemIncludePath>/home/imxpad/ICA/xpix_library_2_3/imxpad_lib/xpci_lib</systemIncludePath>-->
- 						<!--<systemIncludePath>/home/imxpad/xpix_2_0_9/imxpad_lib/xpci_lib</systemIncludePath> -->
- 					<!--</systemIncludePaths> -->
- 				<!--</cpp>-->
+
+<!--	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.freehep</groupId>
+				<artifactId>freehep-nar-plugin</artifactId>
+				<configuration>
+ 				<cpp>
+ 					<systemIncludePaths>
+ 						<systemIncludePath>/home/imxpad/ICA/xpix_library_2_3/imxpad_lib/xpci_lib</systemIncludePath>
+ 						<systemIncludePath>/home/informatique/ica/langlois/ImXpad/xpix_2_0_9/imxpad_lib/xpci_lib</systemIncludePath>
+ 					</systemIncludePaths>
+ 				</cpp>
 
 
- 	<!--			<linker> -->
- 	<!--				<libs> -->
- 	<!--					<lib> -->
- 							<!--<name>xpci_lib</name>-->
- 							<!--<type>static</type>-->
- 							<!--<directory>/home/imxpad/ICA/xpix_library_2_3/imxpad_lib/xpci_lib</directory>-->
- 							<!--<directory>/home/imxpad/xpix_2_0_9/imxpad_lib/xpci_lib</directory>-->
- 						<!--</lib> -->
- 					<!--</libs> -->
- 				<!--</linker> -->
- 			<!--</configuration> -->
-			<!--</plugin>-->
-		<!--</plugins>-->
-	<!--</build>-->
+ 				<linker>
+ 					<libs>
+ 						<lib>
+ 							<name>xpci_lib</name>
+ 							<type>static</type>
+ 							<directory>/home/imxpad/ICA/xpix_library_2_3/imxpad_lib/xpci_lib</directory>
+ 							<directory>/home/informatique/ica/langlois/ImXpad/xpix_2_0_9/imxpad_lib/xpci_lib</directory>
+ 						</lib>
+ 					</libs>
+ 				</linker>
+ 			</configuration>
+			</plugin>
+		</plugins>
+	</build>-->
 
 </project>
