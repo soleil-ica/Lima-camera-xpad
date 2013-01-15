@@ -481,10 +481,10 @@ void Interface::getStatus(StatusType& status)
 		  	status.det = DetFault;
 		  	status.acq = AcqFault;
 			break;
-        /*case Camera::Calibrating:
+        case Camera::Calibrating:
 		  	status.det = DetExposure;
 		  	status.acq = AcqConfig;
-			break;*/
+			break;
 	}
 	status.det_mask = DetExposure | DetReadout ;
 }

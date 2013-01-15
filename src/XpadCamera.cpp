@@ -38,18 +38,24 @@ static const int 	BOARDNUM 	= 0;
 //- Ctor
 //---------------------------
 Camera::Camera(string xpad_model): 	m_buffer_cb_mgr(m_buffer_alloc_mgr),
-m_buffer_ctrl_mgr(m_buffer_cb_mgr),
-m_modules_mask(0x00),
-m_chip_number(7),
-m_pixel_depth(B4),
-m_nb_frames(1)
+m_buffer_ctrl_mgr(m_buffer_cb_mgr)
 {
 	DEB_CONSTRUCTOR();
 
 	//- default values:
+    m_modules_mask      = 0x00;
+    m_chip_number       = 7; 
+    m_pixel_depth       = B2; //- 16 bits
+    m_nb_frames         = 1;
+
     m_status            = Camera::Ready;
     m_acquisition_type	= Camera::SYNC;
     m_current_nb_frames = 0;
+
+    m_time_between_images_usec  = 5000;
+	m_ovf_refresh_time_usec     = 4000;
+    m_time_before_start_usec    = 0;
+    m_shutter_time_usec         = 0;
 
     if		(xpad_model == "BACKPLANE") 	m_xpad_model = BACKPLANE;
     else if	(xpad_model == "IMXPAD_S70")	m_xpad_model = IMXPAD_S70;
@@ -181,7 +187,7 @@ void Camera::start()
 							local_nb_frames,
 							XPIX_NOT_USED_YET,
 							m_imxpad_format,
-							(m_xpad_model == IMXPAD_S140)?1:XPIX_NOT_USED_YET,/**/
+							XPIX_NOT_USED_YET,
 							XPIX_NOT_USED_YET,
 							XPIX_NOT_USED_YET,
 							XPIX_NOT_USED_YET,
@@ -886,7 +892,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                 {
                     DEB_TRACE() <<"Camera::->XPAD_DLL_CALIBRATE";
 
-                    m_status = Camera::Exposure;
+                    m_status = Camera::Calibrating;
 
                     switch (m_calibration_type)
                     {
