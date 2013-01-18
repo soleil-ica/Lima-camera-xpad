@@ -53,6 +53,7 @@ const size_t  XPAD_DLL_CALIBRATE		    =	(yat::FIRST_USER_MSG + 103);
 
 #include "HwMaxImageSizeCallback.h"
 #include "HwBufferMgr.h"
+#include "Event.h"
 
 using namespace std;
 
@@ -73,14 +74,18 @@ namespace Xpad
 	* \class Camera
 	* \brief object controlling the xpad detector via xpix driver
 	*******************************************************************/
-	class Camera : public yat::Task
+	class Camera : public yat::Task,public EventCallbackGen
 	{
 		DEB_CLASS_NAMESPC(DebModCamera, "Camera", "Xpad");
 
 	public:
 
 		enum Status {
-			Ready, Exposure, Readout, Fault, Calibrating
+			        Ready,
+                    Exposure,
+                    Readout,
+                    Fault,
+                    Calibrating
 		};
 
         enum XpadAcqType {
@@ -91,9 +96,9 @@ namespace Xpad
         enum CalibrationType {
 	                OTN_SLOW = 0,
 	                OTN_MEDIUM,
-			OTN_HIGH,
-			BEAM,
-			UPLOAD
+			        OTN_HIGH,
+			        BEAM,
+			        UPLOAD
 		};
 
         //- CTOR/DTOR

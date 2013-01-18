@@ -908,6 +908,11 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                             }
                             else
                             {
+
+	                            Event *my_event = new Event(Hardware, Event::Error, Event::Camera, Event::Default, "the calibration path already exist");
+	                            //DEB_EVENT(*my_event) << DEB_VAR1(*my_event);
+	                            reportEvent(my_event);
+
                                 m_status = Camera::Fault;
                                 //- TODO: get the xpix error 
                                 throw LIMA_HW_EXC(Error, "Error in imxpad_calibrationOTN_SLOW!");

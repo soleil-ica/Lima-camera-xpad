@@ -132,6 +132,19 @@ class SyncCtrlObj : public HwSyncCtrlObj
 };
 
 /*******************************************************************
+ * \class EventCtrlObj
+ * \brief Control object providing Xpad event interface
+ *******************************************************************/
+class EventCtrlObj : public HwEventCtrlObj
+{
+	DEB_CLASS(DebModCamera, "EventCtrlObj");
+
+public:
+	EventCtrlObj();
+	virtual ~EventCtrlObj();
+};
+
+/*******************************************************************
  * \class Interface
  * \brief Xpad hardware interface
  *******************************************************************/
@@ -163,6 +176,7 @@ class Interface : public HwInterface
 	DetInfoCtrlObj	m_det_info;
 	BufferCtrlObj	m_buffer;
 	SyncCtrlObj		m_sync;
+    EventCtrlObj   m_event;
 
 };
 } // namespace xpad

@@ -371,11 +371,23 @@ void SyncCtrlObj::getValidRanges(ValidRangesType& valid_ranges)
 	valid_ranges.max_lat_time = max_time;
 }
 
+/*******************************************************************
+ * \brief EventCtrlObj constructor
+ *******************************************************************/
+EventCtrlObj::EventCtrlObj()
+{
+	DEB_CONSTRUCTOR();
+}
+
+EventCtrlObj::~EventCtrlObj()
+{
+	DEB_DESTRUCTOR();
+}
+
 
 /*******************************************************************
  * \brief Hw Interface constructor
  *******************************************************************/
-
 Interface::Interface(Camera& cam)
 	: m_cam(cam),m_det_info(cam), m_buffer(cam),m_sync(cam)
 {
@@ -389,6 +401,9 @@ Interface::Interface(Camera& cam)
 	
 	HwSyncCtrlObj *sync = &m_sync;
 	m_cap_list.push_back(HwCap(sync));
+
+    HwEventCtrlObj *my_event = &m_event;
+	m_cap_list.push_back(HwCap(my_event));
 }
 
 //-----------------------------------------------------
