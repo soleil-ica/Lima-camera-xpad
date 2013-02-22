@@ -120,7 +120,7 @@ class SyncCtrlObj : public HwSyncCtrlObj
     virtual void getExpTime(double& exp_time);
 
     virtual void setLatTime(double  lat_time){}//- Not supported by Xpad
-    virtual void getLatTime(double& lat_time){}//- Not supported by Xpad
+    virtual void getLatTime(double& lat_time){lat_time = 0;}//- Not supported by Xpad
 
     virtual void setNbHwFrames(int  nb_frames);
     virtual void getNbHwFrames(int& nb_frames);
