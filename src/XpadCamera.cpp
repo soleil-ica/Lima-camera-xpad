@@ -341,11 +341,14 @@ void Camera::setTrigMode(TrigMode mode)
         m_imxpad_trigger_mode = 1;
 		break;
 	case ExtTrigSingle:
-		m_imxpad_trigger_mode = 2;
+		m_imxpad_trigger_mode = 2; //- 1 trig externe declenche N gates internes (les gate etant reglé par soft)
+		break;
+    case ExtTrigMult:
+		m_imxpad_trigger_mode = 3; //- N trig externes declenchent N gates internes (les gate etant reglé par soft) 
 		break;
 	default:
-		DEB_ERROR() << "Error: Trigger mode unsupported: only IntTrig, ExtGate or ExtTrigSingle" ;
-		throw LIMA_HW_EXC(Error, "Trigger mode unsupported: only IntTrig, ExtGate or ExtTrigSingle");
+		DEB_ERROR() << "Error: Trigger mode unsupported: only IntTrig, ExtGate, ExtTrigSingle or ExtTrigMult" ;
+		throw LIMA_HW_EXC(Error, "Trigger mode unsupported: only IntTrig, ExtGate, ExtTrigSingle or ExtTrigMult");
 		break;
 	}
 }
@@ -362,10 +365,13 @@ void Camera::getTrigMode(TrigMode& mode)
 		mode = IntTrig;
 		break;
 	case 1:
-		mode = ExtTrigSingle;
+		mode = ExtGate;
 		break;
 	case 2:
-		mode = ExtGate;
+		mode = ExtTrigSingle; //- 1 trig externe declenche N gates internes (les gate etant reglé par soft)
+		break;
+    case 3:
+		mode = ExtTrigMult; //- N trig externes declenchent N gates internes (les gate etant reglé par soft) 
 		break;
 	default:
 		break;
