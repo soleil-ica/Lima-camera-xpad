@@ -496,6 +496,9 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				//- Start the img sequence
 				DEB_TRACE() <<"Start acquiring a sequence of images";
 
+                Timestamp start_sec = Timestamp::now();
+                //yat::int64 start = Time::microsecs();
+
 				if ( xpci_getImgSeq(	m_pixel_depth, 
 					                    m_modules_mask,
 					                    m_chip_number,
@@ -528,6 +531,9 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                     throw LIMA_HW_EXC(Error, "xpci_getImgSeq as returned an error ! ");
 				}
 
+                Timestamp end_sec = Timestamp::now() - start_sec;
+                DEB_TRACE() << "Time for xpci_getImgSeq (sec) = " << end_sec;
+
 				m_status = Camera::Readout;
 
 				DEB_TRACE() 	<< "\n#######################"
@@ -539,6 +545,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				//- Publish each image and call new frame ready for each frame
 				StdBufferCbMgr& buffer_mgr = m_buffer_cb_mgr;
 				DEB_TRACE() <<"Publish each acquired image through newFrameReady()";
+                start_sec = Timestamp::now();
 				for(i=0; i<m_nb_frames; i++)
 				{
                     m_current_nb_frames = i;
@@ -565,6 +572,11 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                     DEB_TRACE() << "image " << i <<" published with newFrameReady()" ;
 				}
 
+                end_sec = Timestamp::now() - start_sec;
+                DEB_TRACE() << "Time for publishing images to Lima (sec) = " << end_sec;
+
+
+                start_sec = Timestamp::now();
 				DEB_TRACE() <<"Freeing every image pointer of the images array";
                 //- they were allocated by the xpci_getImgSeq function
 				for(i=0 ; i < m_nb_frames ; i++)
@@ -572,6 +584,8 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				DEB_TRACE() <<"Freeing images array";
 				delete[] image_array;
 				m_status = Camera::Ready;
+                end_sec = Timestamp::now() - start_sec;
+                DEB_TRACE() << "Time for freeing memory: now Ready! (sec) = " << end_sec;
 				DEB_TRACE() <<"m_status is Ready";
 
 			}

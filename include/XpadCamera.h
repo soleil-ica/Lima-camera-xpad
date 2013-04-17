@@ -22,24 +22,17 @@
 #ifndef XPADCAMERA_H
 #define XPADCAMERA_H
 
-///////////////////////////////////////////////////////////
-// YAT::TASK 
-///////////////////////////////////////////////////////////
+//- Yat Task
 #include <yat/threading/Task.h>
 
 #define kLO_WATER_MARK      128
 #define kHI_WATER_MARK      512
-
 #define kPOST_MSG_TMO       2
 
 const size_t  XPAD_DLL_START_SYNC_MSG		=	(yat::FIRST_USER_MSG + 100);
 const size_t  XPAD_DLL_START_ASYNC_MSG		=	(yat::FIRST_USER_MSG + 101);
 const size_t  XPAD_DLL_START_LIVE_ACQ_MSG	=	(yat::FIRST_USER_MSG + 102);
 const size_t  XPAD_DLL_CALIBRATE		    =	(yat::FIRST_USER_MSG + 103);
-
-
-
-///////////////////////////////////////////////////////////
 
 //- Xpix
 #include <xpci_interface.h>
@@ -51,6 +44,7 @@ const size_t  XPAD_DLL_CALIBRATE		    =	(yat::FIRST_USER_MSG + 103);
 #include <stdlib.h>
 #include <limits>
 
+//- Lima
 #include "HwMaxImageSizeCallback.h"
 #include "HwBufferMgr.h"
 #include "Event.h"
