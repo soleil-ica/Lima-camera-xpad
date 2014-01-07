@@ -13,7 +13,7 @@
 	<version>1.3.0-SNAPSHOT</version>
 	
 	<packaging>nar</packaging>
-	<name>LimaXpad</name>    <!-- use for the name of executable -->
+	<name>LimaXpad</name>
 	<description>This module controls the Xpad Detector</description>
 
 	<dependencies>
@@ -30,7 +30,6 @@
 		<dependency>
 			<groupId>fr.soleil.lib</groupId>
 			<artifactId>YAT-${aol}-${library}-${mode}</artifactId>
-			<version>1.7.17-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 	
