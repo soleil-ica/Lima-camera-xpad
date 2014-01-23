@@ -19,140 +19,116 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //###########################################################################
-#include "XpadInterface.h"
-#include <algorithm>
+
+#include "XpadDetInfoCtrlObj.h"
+#include "XpadCamera.h"
 
 using namespace lima;
 using namespace lima::Xpad;
 
 /*******************************************************************
- * \brief Hw Interface constructor
+ * \brief DetInfoCtrlObj constructor
  *******************************************************************/
-Interface::Interface(Camera& cam)
-	: m_cam(cam),m_det_info(cam), m_buffer(cam),m_sync(cam)
+DetInfoCtrlObj::DetInfoCtrlObj(Camera& cam):m_cam(cam)
 {
-	DEB_CONSTRUCTOR();
-
-	HwDetInfoCtrlObj *det_info = &m_det_info;
-	m_cap_list.push_back(HwCap(det_info));
-
-	HwBufferCtrlObj *buffer = &m_buffer;
-	m_cap_list.push_back(HwCap(buffer));
-	
-	HwSyncCtrlObj *sync = &m_sync;
-	m_cap_list.push_back(HwCap(sync));
-
-    HwEventCtrlObj *my_event = &m_event;
-	m_cap_list.push_back(HwCap(my_event));
+    DEB_CONSTRUCTOR();
 }
 
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-Interface::~Interface()
+DetInfoCtrlObj::~DetInfoCtrlObj()
 {
-	DEB_DESTRUCTOR();
+    DEB_DESTRUCTOR();
 }
 
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void Interface::getCapList(HwInterface::CapList &cap_list) const
+void DetInfoCtrlObj::getMaxImageSize(Size& size)
 {
-	DEB_MEMBER_FUNCT();
-	cap_list = m_cap_list;
+    DEB_MEMBER_FUNCT();
+    m_cam.getImageSize(size);
 }
 
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void Interface::reset(ResetLevel reset_level)
+void DetInfoCtrlObj::getDetectorImageSize(Size& size)
 {
-	DEB_MEMBER_FUNCT();
-	DEB_PARAM() << DEB_VAR1(reset_level);
-
-	stopAcq();
-
-	Size image_size;
-	m_det_info.getMaxImageSize(image_size);
-	ImageType image_type;
-	m_det_info.getDefImageType(image_type);
-	FrameDim frame_dim(image_size, image_type);
-	m_buffer.setFrameDim(frame_dim);
-
-	m_buffer.setNbConcatFrames(1);
-	m_buffer.setNbBuffers(1);
+    DEB_MEMBER_FUNCT();
+    m_cam.getImageSize(size);
 }
 
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void Interface::prepareAcq()
+void DetInfoCtrlObj::getDefImageType(ImageType& image_type)
 {
-	DEB_MEMBER_FUNCT();
-    m_cam.prepare();
+    DEB_MEMBER_FUNCT();
+
+	m_cam.getPixelDepth(image_type);
 }
 
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void Interface::startAcq()
+void DetInfoCtrlObj::getCurrImageType(ImageType& image_type)
 {
-	DEB_MEMBER_FUNCT();
-	m_cam.start();
+    DEB_MEMBER_FUNCT();
+	m_cam.getPixelDepth(image_type);
 }
 
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void Interface::stopAcq()
+void DetInfoCtrlObj::setCurrImageType(ImageType image_type)
 {
-	DEB_MEMBER_FUNCT();
-	m_cam.stop();
+    DEB_MEMBER_FUNCT();
+    m_cam.setPixelDepth(image_type);
 }
 
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void Interface::getStatus(StatusType& status)
+void DetInfoCtrlObj::getPixelSize(double& x_size,double& y_size)
 {
-	Camera::Status xpad_status = Camera::Ready;
-	m_cam.getStatus(xpad_status);
-	switch (xpad_status)
-	{
-		case Camera::Ready:
-			status.det = DetIdle;
-            status.acq = AcqReady;
-			break;
-		case Camera::Exposure:
-			status.det = DetExposure;
-			status.acq = AcqRunning;
-			break;
-		case Camera::Readout:
-			status.det = DetReadout;
-			status.acq = AcqRunning;
-			break;
-		case Camera::Fault:
-		  	status.det = DetFault;
-		  	status.acq = AcqFault;
-			break;
-        case Camera::Calibrating:
-		  	status.det = DetExposure;
-		  	status.acq = AcqConfig;
-			break;
-	}
-	status.det_mask = DetExposure | DetReadout ;
+    DEB_MEMBER_FUNCT();
+    m_cam.getPixelSize(x_size,y_size);
 }
 
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-int Interface::getNbHwAcquiredFrames()
+void DetInfoCtrlObj::getDetectorType(std::string& type)
 {
-	DEB_MEMBER_FUNCT();
-	int nb_acq_frames;
-	nb_acq_frames = m_cam.getNbHwAcquiredFrames();
-	return nb_acq_frames;
+    DEB_MEMBER_FUNCT();
+    m_cam.getDetectorType(type);
 }
 
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+void DetInfoCtrlObj::getDetectorModel(std::string& model)
+{
+    DEB_MEMBER_FUNCT();
+    m_cam.getDetectorModel(model);
+}
 
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+void DetInfoCtrlObj::registerMaxImageSizeCallback(HwMaxImageSizeCallback& cb)
+{
+    DEB_MEMBER_FUNCT();
+    //m_cam.registerMaxImageSizeCallback(cb);
+}
+
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+void DetInfoCtrlObj::unregisterMaxImageSizeCallback(HwMaxImageSizeCallback& cb)
+{
+    DEB_MEMBER_FUNCT();
+    //m_cam.unregisterMaxImageSizeCallback(cb);
+}

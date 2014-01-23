@@ -24,14 +24,12 @@
 
 //- Yat Task
 #include <yat/threading/Task.h>
-
 #define kLO_WATER_MARK      128
 #define kHI_WATER_MARK      512
 #define kPOST_MSG_TMO       2
-
 const size_t  XPAD_DLL_START_SYNC_MSG		=	(yat::FIRST_USER_MSG + 100);
 const size_t  XPAD_DLL_START_ASYNC_MSG		=	(yat::FIRST_USER_MSG + 101);
-const size_t  XPAD_DLL_START_LIVE_ACQ_MSG	=	(yat::FIRST_USER_MSG + 102);
+const size_t  XPAD_DLL_GET_ASYNC_IMAGES_MSG	=	(yat::FIRST_USER_MSG + 102);
 const size_t  XPAD_DLL_CALIBRATE		    =	(yat::FIRST_USER_MSG + 103);
 
 //- Xpix
@@ -41,6 +39,7 @@ const size_t  XPAD_DLL_CALIBRATE		    =	(yat::FIRST_USER_MSG + 103);
 #include <xpci_calib_imxpad.h>
 #include <xpci_imxpad.h>
 
+//- std
 #include <stdlib.h>
 #include <limits>
 
@@ -49,14 +48,19 @@ const size_t  XPAD_DLL_CALIBRATE		    =	(yat::FIRST_USER_MSG + 103);
 #include "HwBufferMgr.h"
 #include "Event.h"
 
-using namespace std;
-
+//- Tools / Defs / Consts
 #define SET(var, bit) ( var|=  (1 << bit)  )       /* positionne le bit numero 'bit' a 1 dans une variable*/
 #define CLR(var, bit) ( var&= ~(1 << bit)  )       /* positionne le bit numero 'bit' a 0 dans une variable*/
 #define GET(var, bit) ((var&   (1 << bit))?1:0 )   /* retourne la valeur du bit numero 'bit' dans une variable*/
 const int FIRST_TIMEOUT = 8000;
 #define XPIX_NOT_USED_YET 0
 #define XPIX_V1_COMPATIBILITY 0
+
+const int CHIP_NB_ROW       = 120;
+const int CHIP_NB_COLUMN    = 80;
+
+const int TWO_BYTES         = 2;
+const int FOUR_BYTES        = 4;
 
 
 namespace lima
@@ -68,7 +72,7 @@ namespace Xpad
 	* \class Camera
 	* \brief object controlling the xpad detector via xpix driver
 	*******************************************************************/
-	class Camera : public yat::Task,public EventCallbackGen
+	class Camera : public yat::Task, public EventCallbackGen
 	{
 		DEB_CLASS_NAMESPC(DebModCamera, "Camera", "Xpad");
 
@@ -96,11 +100,11 @@ namespace Xpad
 		};
 
         //- CTOR/DTOR
-		Camera(string xpad_type);
+        Camera(std::string xpad_type);
 		~Camera();
 
         //- Starting/Stopping
-        void prepare(){} //- nothing yet: will be done later
+        void prepare();
 		void start();
 		void stop();
 
@@ -130,7 +134,7 @@ namespace Xpad
 		//---------------------------------------------------------------
 		//- XPAD Stuff
 		//! Set all the config G
-		void setAllConfigG(const vector<long>& allConfigG);
+        void setAllConfigG(const std::vector<long>& allConfigG);
 		//!	Set the Acquisition type between fast and slow
 		void setAcquisitionType(short acq_type);
 		//!	Load of flat config of value: flat_value (on each pixel)
@@ -138,7 +142,7 @@ namespace Xpad
 		//! Load all the config G 
 		void loadAllConfigG(unsigned long modNum, unsigned long chipId , unsigned long* config_values);
 		//! Load a wanted config G with a wanted value
-		void loadConfigG(const vector<unsigned long>& reg_and_value);
+		void loadConfigG(const std::vector<unsigned long>& reg_and_value);
 		//! Load a known value to the pixel counters
 		void loadAutoTest(unsigned known_value);
         //! Save the config L (DACL) to XPAD RAM
@@ -157,13 +161,13 @@ namespace Xpad
 		                            unsigned nbImages,unsigned BusyOutSel,unsigned formatIMG,unsigned postProc,
 		                            unsigned GP1,unsigned GP2,unsigned GP3,unsigned GP4);
         //! Calibrate over the noise Slow and save dacl and configg files in path
-        void calibrateOTNSlow (string path);
+        void calibrateOTNSlow (const std::string& path);
         //! Calibrate over the noise Medium and save dacl and configg files in path
-        void calibrateOTNMedium (string path);
+        void calibrateOTNMedium (const std::string& path);
         //! Calibrate over the noise High and save dacl and configg files in path
-        void calibrateOTNHigh (string path);
+        void calibrateOTNHigh (const std::string& path);
         //! upload the calibration (dacl + config) that is stored in path
-        void uploadCalibration(string path);
+        void uploadCalibration(const std::string& path);
         //! upload the wait times between each images in case of a sequence of images (Twait from setExposureParameters should be 0)
         void uploadExpWaitTimes(unsigned long *pWaitTime, unsigned size);
         //! increment the ITHL
@@ -174,6 +178,7 @@ namespace Xpad
         void setSpecificParameters( unsigned deadtime, unsigned init,
 								    unsigned shutter, unsigned ovf,
 								    unsigned n,       unsigned p,
+                                    unsigned busy_out_sel,
 								    unsigned GP1,     unsigned GP2,    unsigned GP3,      unsigned GP4);
 
         //! Set the Calibration Adjusting number of iteration
@@ -193,12 +198,14 @@ namespace Xpad
 		int 			m_nb_frames;		
         int 			m_current_nb_frames;
 		Size			m_image_size;
-		IMG_TYPE		m_pixel_depth;
-        unsigned int    m_imxpad_format;
+		unsigned int    m_imxpad_format;
         unsigned int    m_imxpad_trigger_mode;
         unsigned int    m_exp_time_usec;
 		int         	m_timeout_ms;
         bool            m_stop_asked;
+
+        void**	        m_image_array;
+        Timestamp       m_start_sec,m_end_sec;
 
 
 		//---------------------------------
@@ -209,11 +216,15 @@ namespace Xpad
         int				        m_module_number;
         unsigned int	        m_chip_number;
         int				        m_full_image_size_in_bytes;
-        vector<long>	        m_all_config_g;
+        std::vector<long>       m_all_config_g;
         unsigned short 			m_xpad_model;
-        string                  m_calibration_path;
+        std::string             m_calibration_path;
         unsigned int            m_calibration_adjusting_number;
+        //- Xpad async stuff
+        int                     m_nb_last_aquired_image;
+        int                     m_nb_image_done;
         //unsigned short*         m_dacl;
+
         //- Specific xpad stuff
         unsigned int m_time_between_images_usec; //- Temps entre chaque image
         unsigned int m_time_before_start_usec;     //- Temps initial
@@ -221,6 +232,7 @@ namespace Xpad
 	    unsigned int m_ovf_refresh_time_usec;
         unsigned int m_specific_param_n;
         unsigned int m_specific_param_p;
+        unsigned int m_busy_out_sel;
         unsigned int m_specific_param_GP1;
 	    unsigned int m_specific_param_GP2;
 	    unsigned int m_specific_param_GP3;

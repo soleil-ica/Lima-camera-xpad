@@ -19,140 +19,109 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //###########################################################################
-#include "XpadInterface.h"
-#include <algorithm>
+
+#include "XpadSyncCtrlObj.h"
+#include "XpadCamera.h"
 
 using namespace lima;
 using namespace lima::Xpad;
 
 /*******************************************************************
- * \brief Hw Interface constructor
+ * \brief SyncCtrlObj constructor
  *******************************************************************/
-Interface::Interface(Camera& cam)
-	: m_cam(cam),m_det_info(cam), m_buffer(cam),m_sync(cam)
+SyncCtrlObj::SyncCtrlObj(Camera& cam)
+	: HwSyncCtrlObj(), m_cam(cam)
 {
-	DEB_CONSTRUCTOR();
-
-	HwDetInfoCtrlObj *det_info = &m_det_info;
-	m_cap_list.push_back(HwCap(det_info));
-
-	HwBufferCtrlObj *buffer = &m_buffer;
-	m_cap_list.push_back(HwCap(buffer));
-	
-	HwSyncCtrlObj *sync = &m_sync;
-	m_cap_list.push_back(HwCap(sync));
-
-    HwEventCtrlObj *my_event = &m_event;
-	m_cap_list.push_back(HwCap(my_event));
 }
 
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-Interface::~Interface()
+SyncCtrlObj::~SyncCtrlObj()
 {
-	DEB_DESTRUCTOR();
 }
 
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void Interface::getCapList(HwInterface::CapList &cap_list) const
+bool SyncCtrlObj::checkTrigMode(TrigMode trig_mode)
 {
-	DEB_MEMBER_FUNCT();
-	cap_list = m_cap_list;
-}
-
-//-----------------------------------------------------
-//
-//-----------------------------------------------------
-void Interface::reset(ResetLevel reset_level)
-{
-	DEB_MEMBER_FUNCT();
-	DEB_PARAM() << DEB_VAR1(reset_level);
-
-	stopAcq();
-
-	Size image_size;
-	m_det_info.getMaxImageSize(image_size);
-	ImageType image_type;
-	m_det_info.getDefImageType(image_type);
-	FrameDim frame_dim(image_size, image_type);
-	m_buffer.setFrameDim(frame_dim);
-
-	m_buffer.setNbConcatFrames(1);
-	m_buffer.setNbBuffers(1);
-}
-
-//-----------------------------------------------------
-//
-//-----------------------------------------------------
-void Interface::prepareAcq()
-{
-	DEB_MEMBER_FUNCT();
-    m_cam.prepare();
-}
-
-//-----------------------------------------------------
-//
-//-----------------------------------------------------
-void Interface::startAcq()
-{
-	DEB_MEMBER_FUNCT();
-	m_cam.start();
-}
-
-//-----------------------------------------------------
-//
-//-----------------------------------------------------
-void Interface::stopAcq()
-{
-	DEB_MEMBER_FUNCT();
-	m_cam.stop();
-}
-
-//-----------------------------------------------------
-//
-//-----------------------------------------------------
-void Interface::getStatus(StatusType& status)
-{
-	Camera::Status xpad_status = Camera::Ready;
-	m_cam.getStatus(xpad_status);
-	switch (xpad_status)
+	bool valid_mode = false;
+	switch (trig_mode)
 	{
-		case Camera::Ready:
-			status.det = DetIdle;
-            status.acq = AcqReady;
-			break;
-		case Camera::Exposure:
-			status.det = DetExposure;
-			status.acq = AcqRunning;
-			break;
-		case Camera::Readout:
-			status.det = DetReadout;
-			status.acq = AcqRunning;
-			break;
-		case Camera::Fault:
-		  	status.det = DetFault;
-		  	status.acq = AcqFault;
-			break;
-        case Camera::Calibrating:
-		  	status.det = DetExposure;
-		  	status.acq = AcqConfig;
-			break;
+		case IntTrig:
+		case ExtTrigSingle:
+		case ExtGate:
+			valid_mode = true;
+		break;
+
+		default:
+			valid_mode = false;
 	}
-	status.det_mask = DetExposure | DetReadout ;
+	return valid_mode;
 }
 
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-int Interface::getNbHwAcquiredFrames()
+void SyncCtrlObj::setTrigMode(TrigMode trig_mode)
 {
-	DEB_MEMBER_FUNCT();
-	int nb_acq_frames;
-	nb_acq_frames = m_cam.getNbHwAcquiredFrames();
-	return nb_acq_frames;
+	DEB_MEMBER_FUNCT();    
+	if (!checkTrigMode(trig_mode))
+		THROW_HW_ERROR(InvalidValue) << "Invalid " << DEB_VAR1(trig_mode);
+	m_cam.setTrigMode(trig_mode);
+	
 }
 
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+void SyncCtrlObj::getTrigMode(TrigMode& trig_mode)
+{
+	m_cam.getTrigMode(trig_mode);
+}
 
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+void SyncCtrlObj::setExpTime(double exp_time)
+{
+	m_cam.setExpTime(exp_time);
+}
+
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+void SyncCtrlObj::getExpTime(double& exp_time)
+{
+	m_cam.getExpTime(exp_time);
+}
+
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+void SyncCtrlObj::setNbHwFrames(int nb_frames)
+{
+	m_cam.setNbFrames(nb_frames);
+}
+
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+void SyncCtrlObj::getNbHwFrames(int& nb_frames)
+{
+	m_cam.getNbFrames(nb_frames);
+}
+
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+void SyncCtrlObj::getValidRanges(ValidRangesType& valid_ranges)
+{
+	double min_time = 10e-9;;
+	double max_time = 10e6;
+	valid_ranges.min_exp_time = min_time;
+	valid_ranges.max_exp_time = max_time;
+	valid_ranges.min_lat_time = min_time;
+	valid_ranges.max_lat_time = max_time;
+}
