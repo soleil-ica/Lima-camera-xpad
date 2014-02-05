@@ -135,7 +135,7 @@ namespace Xpad
 		//- XPAD Stuff
 		//! Set all the config G
         void setAllConfigG(const std::vector<long>& allConfigG);
-		//!	Set the Acquisition type between fast and slow
+		//!	Set the Acquisition type between synchrone and asynchrone
 		void setAcquisitionType(short acq_type);
 		//!	Load of flat config of value: flat_value (on each pixel)
 		void loadFlatConfig(unsigned flat_value);
@@ -179,11 +179,11 @@ namespace Xpad
 								    unsigned shutter, unsigned ovf,
 								    unsigned n,       unsigned p,
                                     unsigned busy_out_sel,
+                                    bool geom_corr,
 								    unsigned GP1,     unsigned GP2,    unsigned GP3,      unsigned GP4);
 
         //! Set the Calibration Adjusting number of iteration
         void setCalibrationAdjustingNumber(unsigned calibration_adjusting_number);
-
 
 		//- yat::Task implementation
 	protected: 
@@ -233,6 +233,7 @@ namespace Xpad
         unsigned int m_specific_param_n;
         unsigned int m_specific_param_p;
         unsigned int m_busy_out_sel;
+        unsigned int m_geom_corr;
         unsigned int m_specific_param_GP1;
 	    unsigned int m_specific_param_GP2;
 	    unsigned int m_specific_param_GP3;

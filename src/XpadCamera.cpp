@@ -52,6 +52,7 @@ m_buffer_ctrl_mgr(m_buffer_cb_mgr)
     m_shutter_time_usec             = 0;
     m_busy_out_sel                  = 0;
     m_calibration_adjusting_number  = 1;
+    m_geom_corr                     = 0;
 
     if		(xpad_model == "BACKPLANE") 	m_xpad_model = BACKPLANE;
     else if	(xpad_model == "IMXPAD_S70")	m_xpad_model = IMXPAD_S70;
@@ -210,7 +211,7 @@ void Camera::start()
 {
     DEB_MEMBER_FUNCT();
 
-    if((m_acquisition_type == Camera::SYNC) || (m_nb_frames == 0)) //- aka live mode
+    if((m_acquisition_type == Camera::SYNC) || (m_nb_frames == 0)) //- 0: aka live mode
     {
         //- Post XPAD_DLL_START_SYNC_MSG msg
         this->post(new yat::Message(XPAD_DLL_START_SYNC_MSG), kPOST_MSG_TMO);
@@ -646,7 +647,8 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
         case XPAD_DLL_GET_ASYNC_IMAGES_MSG:
             {
                 DEB_TRACE() <<"Camera::->XPAD_DLL_GET_ASYNC_IMAGES_MSG";
-    
+                
+                //- TODO: set the corrected img 
                 void*   m_one_image;
 
                 if(m_imxpad_format == 0) //- aka 16 bits
@@ -670,7 +672,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                                                     (void*)m_one_image,
                                                     i, //- image index to get
                                                     NULL, //- corrected img
-                                                    0 //- flag for activating correction
+                                                    m_geom_corr //- flag for activating correction
                                                     ) == -1)           
 
                         {
@@ -856,19 +858,19 @@ void Camera::loadAllConfigG(unsigned long modNum, unsigned long chipId , unsigne
     unsigned long mask_local_chip = 0x00;
     SET(mask_local_chip,(chipId-1));// minus 1 because chipId start at 1
 
-    if(xpci_modLoadAllConfigG(mask_local_module,mask_local_chip, 
-        config_values[0],//- CMOS_TP
-        config_values[1],//- AMP_TP, 
-        config_values[2],//- ITHH, 
-        config_values[3],//- VADJ, 
-        config_values[4],//- VREF, 
-        config_values[5],//- IMFP, 
-        config_values[6],//- IOTA, 
-        config_values[7],//- IPRE, 
-        config_values[8],//- ITHL, 
-        config_values[9],//- ITUNE, 
-        config_values[10]//- IBUFFER
-    ) == 0)
+    if(xpci_modLoadAllConfigG(  mask_local_module,mask_local_chip, 
+                                config_values[0],//- CMOS_TP
+                                config_values[1],//- AMP_TP, 
+                                config_values[2],//- ITHH, 
+                                config_values[3],//- VADJ, 
+                                config_values[4],//- VREF, 
+                                config_values[5],//- IMFP, 
+                                config_values[6],//- IOTA, 
+                                config_values[7],//- IPRE, 
+                                config_values[8],//- ITHL, 
+                                config_values[9],//- ITUNE, 
+                                config_values[10]//- IBUFFER
+                            ) == 0)
     {
         DEB_TRACE() << "loadAllConfigG for module " << modNum  << ", and chip " << chipId << " -> OK" ;
         DEB_TRACE() << "(loadAllConfigG for mask_local_module " << mask_local_module  << ", and mask_local_chip " << mask_local_chip << " )" ;
@@ -1110,11 +1112,12 @@ void Camera::decrementITHL()
 //-----------------------------------------------------
 //		Set the specific parameters
 //-----------------------------------------------------
-void Camera::setSpecificParameters( unsigned deadtime, unsigned init,
-                                   unsigned shutter, unsigned ovf,
-                                   unsigned n,       unsigned p,
-                                   unsigned busy_out_sel,
-                                   unsigned GP1,     unsigned GP2,    unsigned GP3,      unsigned GP4)
+void Camera::setSpecificParameters(    unsigned deadtime, unsigned init,
+                                       unsigned shutter, unsigned ovf,
+                                       unsigned n,       unsigned p,
+                                       unsigned busy_out_sel,
+                                       bool geom_corr,
+                                       unsigned GP1,     unsigned GP2,    unsigned GP3,      unsigned GP4)
 {
 
     DEB_MEMBER_FUNCT();
@@ -1128,6 +1131,7 @@ void Camera::setSpecificParameters( unsigned deadtime, unsigned init,
     m_specific_param_n          = n;
     m_specific_param_p          = p;
     m_busy_out_sel              = busy_out_sel;
+    m_geom_corr                 = (unsigned int)geom_corr;
     m_specific_param_GP1		= GP1;
     m_specific_param_GP2		= GP2;
     m_specific_param_GP3		= GP3;

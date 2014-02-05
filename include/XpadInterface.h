@@ -30,8 +30,8 @@
 #include "XpadSyncCtrlObj.h"
 #include "XpadEventCtrlObj.h"
 
-using namespace lima;
-using namespace lima::Xpad;
+//using namespace lima;
+//using namespace lima::Xpad;
 
 namespace lima
 {
