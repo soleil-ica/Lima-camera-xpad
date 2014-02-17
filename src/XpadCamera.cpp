@@ -55,6 +55,7 @@ m_buffer_ctrl_mgr(m_buffer_cb_mgr)
     m_geom_corr                     = 0;
 
     if		(xpad_model == "BACKPLANE") 	m_xpad_model = BACKPLANE;
+    else if	(xpad_model == "HUB")	        m_xpad_model = HUB;
     else if	(xpad_model == "IMXPAD_S70")	m_xpad_model = IMXPAD_S70;
     else if	(xpad_model == "IMXPAD_S140")	m_xpad_model = IMXPAD_S140;
     else if	(xpad_model == "IMXPAD_S340")	m_xpad_model = IMXPAD_S340;
@@ -141,20 +142,12 @@ void Camera::prepare()
     DEB_MEMBER_FUNCT();
 
     m_stop_asked = false;
-    m_image_array = NULL;
+    m_image_array = 0;
     m_nb_image_done = 0;
     m_nb_last_aquired_image = 0;
     
-    //-	((80 colonnes * 7 chips) * taille du pixel) * 120 lignes * nb_modules
-    if (m_imxpad_format == 0) //- aka 16 bits
-    {
-        m_full_image_size_in_bytes = ((CHIP_NB_COLUMN * m_chip_number) * TWO_BYTES)  * (CHIP_NB_ROW * m_module_number);
-    } 
-    else //- aka 32 bits
-    {
-        m_full_image_size_in_bytes = ((CHIP_NB_COLUMN * m_chip_number) * FOUR_BYTES )  * (CHIP_NB_ROW * m_module_number);
-    } 
-
+   
+    
     DEB_TRACE() << "m_acquisition_type = " << m_acquisition_type ;
     DEB_TRACE() << "Setting Exposure parameters with values: ";
     DEB_TRACE() << "\tm_exp_time_usec 		= " << m_exp_time_usec;
@@ -162,10 +155,6 @@ void Camera::prepare()
     DEB_TRACE() << "\tm_nb_frames (before live mode check)			= " << m_nb_frames;
     DEB_TRACE() << "\tm_imxpad_format 		= " << m_imxpad_format;
 
-    //- Check if live mode
-    if (m_nb_frames == 0) //- ie live mode
-        m_nb_frames = 1; //- used for the live mode
-   
     //- call the setExposureParameters
     //m_xpad_model parameter must be 1 (in our detector type IMXPAD_S140) or XPIX_NOT_USED_YET
     //maybe library must manage this, we can provide IMXPAD_Sxx to this function if necessary
@@ -177,7 +166,8 @@ void Camera::prepare()
                             m_imxpad_trigger_mode,
                             XPIX_NOT_USED_YET,
                             XPIX_NOT_USED_YET,
-                            m_nb_frames,
+                            //- if live i.e m_nb_frames==0 => force m_nb_frames =1
+                            (m_nb_frames==0)?1:m_nb_frames,
                             XPIX_NOT_USED_YET,
                             m_imxpad_format,
                             XPIX_NOT_USED_YET,
@@ -186,22 +176,38 @@ void Camera::prepare()
                             XPIX_NOT_USED_YET,
                             XPIX_NOT_USED_YET);
 
-    // allocate multiple buffers
-    DEB_TRACE() << "Allocating image(s) array (" << m_nb_frames << " image(s))";
-    if(m_imxpad_format == 0) //- aka 16 bits
-        m_image_array = reinterpret_cast<void**>(new uint16_t* [ m_nb_frames ]);
-    else //- aka 32 bits
-        m_image_array = reinterpret_cast<void**>(new uint32_t* [ m_nb_frames ]);
+    //-	((80 colonnes * 7 chips) * taille du pixel) * 120 lignes * nb_modules
+    switch(m_pixel_depth)
+    {
+        case B2: //- aka 16 bits
+            DEB_TRACE() << "Allocating 16 bits image(s) array  (" << m_nb_frames << " image(s))";
+            m_full_image_size_in_bytes = ((CHIP_NB_COLUMN * m_chip_number) * TWO_BYTES)  * (CHIP_NB_ROW * m_module_number);
+            m_image_array = reinterpret_cast<void**>(new uint16_t* [ m_nb_frames ]);
+            break;
+        case B4: //- aka 32 bits
+            DEB_TRACE() << "Allocating 32 bits image(s) array (" << m_nb_frames << " image(s))";
+            m_full_image_size_in_bytes = ((CHIP_NB_COLUMN * m_chip_number) * FOUR_BYTES )  * (CHIP_NB_ROW * m_module_number);
+            m_image_array = reinterpret_cast<void**>(new uint32_t* [ m_nb_frames ]);
+            break;
+        default:
+            DEB_ERROR() << "Pixel depth not supported" ;
+            throw LIMA_HW_EXC(Error, "Pixel depth not supported: possible values are:\n16 or \n32");
+            break;
+    }
 
     DEB_TRACE() << "Allocating every image pointer of the image(s) array (1 image full size = "<< m_full_image_size_in_bytes << ") ";
     for( int i=0 ; i < m_nb_frames ; i++ )
     {
-        if(m_imxpad_format == 0) //- aka 16 bits
-            m_image_array[i] = new uint16_t [ m_full_image_size_in_bytes / TWO_BYTES ];//we allocate a number of pixels
-        else //- aka 32 bits
-            m_image_array[i] = new uint32_t [ m_full_image_size_in_bytes / FOUR_BYTES ];//we allocate a number of pixels
+        switch(m_pixel_depth)
+        {
+            case B2: //- aka 16 bits
+                m_image_array[i] = new uint16_t [ m_full_image_size_in_bytes / TWO_BYTES ];//we allocate a number of pixels
+                break;
+            case B4: //- aka 32 bits
+                m_image_array[i] = new uint32_t [ m_full_image_size_in_bytes / FOUR_BYTES ];//we allocate a number of pixels
+                break;
+        }
     }
-
 }
 
 //---------------------------
@@ -317,11 +323,12 @@ void Camera::getDetectorType(std::string& type)
 void Camera::getDetectorModel(std::string& type)
 {
     DEB_MEMBER_FUNCT();
-    if(m_xpad_model == BACKPLANE) type = "BACKPLANE";
-    else if(m_xpad_model == IMXPAD_S70) type = "IMXPAD_S70";
-    else if(m_xpad_model == IMXPAD_S140) type = "IMXPAD_S140";
-    else if(m_xpad_model == IMXPAD_S340) type = "IMXPAD_S340";
-    else if(m_xpad_model == IMXPAD_S540) type = "IMXPAD_S540";
+    if(m_xpad_model == BACKPLANE)           type = "BACKPLANE";
+    else if(m_xpad_model == HUB)            type = "HUB";
+    else if(m_xpad_model == IMXPAD_S70)     type = "IMXPAD_S70";
+    else if(m_xpad_model == IMXPAD_S140)    type = "IMXPAD_S140";
+    else if(m_xpad_model == IMXPAD_S340)    type = "IMXPAD_S340";
+    else if(m_xpad_model == IMXPAD_S540)    type = "IMXPAD_S540";
     else throw LIMA_HW_EXC(Error, "Xpad Type not supported");
 }
 
@@ -350,10 +357,10 @@ void Camera::setTrigMode(TrigMode mode)
         m_imxpad_trigger_mode = 1;
         break;
     case ExtTrigSingle:
-        m_imxpad_trigger_mode = 2; //- 1 trig externe declenche N gates internes (les gate etant reglé par soft)
+        m_imxpad_trigger_mode = 2; //- 1 trig externe declenche N gates internes (les gate etant reglï¿½ par soft)
         break;
     case ExtTrigMult:
-        m_imxpad_trigger_mode = 3; //- N trig externes declenchent N gates internes (les gate etant reglé par soft) 
+        m_imxpad_trigger_mode = 3; //- N trig externes declenchent N gates internes (les gate etant reglï¿½ par soft) 
         break;
     default:
         DEB_ERROR() << "Error: Trigger mode unsupported: only IntTrig, ExtGate, ExtTrigSingle or ExtTrigMult" ;
@@ -377,10 +384,10 @@ void Camera::getTrigMode(TrigMode& mode)
         mode = ExtGate;
         break;
     case 2:
-        mode = ExtTrigSingle; //- 1 trig externe declenche N gates internes (les gate etant reglé par soft)
+        mode = ExtTrigSingle; //- 1 trig externe declenche N gates internes (les gate etant reglï¿½ par soft)
         break;
     case 3:
-        mode = ExtTrigMult; //- N trig externes declenchent N gates internes (les gate etant reglé par soft) 
+        mode = ExtTrigMult; //- N trig externes declenchent N gates internes (les gate etant reglï¿½ par soft) 
         break;
     default:
         break;
@@ -493,10 +500,11 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 
                 m_start_sec = Timestamp::now();
 
-                if ( xpci_getImgSeq(	(IMG_TYPE)m_imxpad_format, 
+                if ( xpci_getImgSeq(	m_pixel_depth, 
                                         m_modules_mask,
                                         m_chip_number,
-                                        m_nb_frames,
+                                        //- if live i.e m_nb_frames==0 => force m_nb_frames =1
+                                        (m_nb_frames==0)?1:m_nb_frames,
                                         (void**)m_image_array,
                                         // next are ignored in V2:
                                         XPIX_V1_COMPATIBILITY,
@@ -581,7 +589,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                 DEB_TRACE() << "m_status is Ready";
 
                 //- Check if the it is live and if yes: restart
-                if (m_stop_asked == false && m_nb_frames == 1)
+                if (m_nb_frames == 0 && m_stop_asked == false)
                 {
                     //- Post XPAD_DLL_START_LIVE_ACQ_MSG msg
                     this->post(new yat::Message(XPAD_DLL_START_SYNC_MSG), kPOST_MSG_TMO);

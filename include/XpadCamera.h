@@ -220,6 +220,7 @@ namespace Xpad
         unsigned short 			m_xpad_model;
         std::string             m_calibration_path;
         unsigned int            m_calibration_adjusting_number;
+        IMG_TYPE                m_pixel_depth;
         //- Xpad async stuff
         int                     m_nb_last_aquired_image;
         int                     m_nb_image_done;
