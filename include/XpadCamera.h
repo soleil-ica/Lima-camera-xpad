@@ -33,6 +33,7 @@ const size_t  XPAD_DLL_START_SYNC_MSG		=	(yat::FIRST_USER_MSG + 100);
 const size_t  XPAD_DLL_START_ASYNC_MSG		=	(yat::FIRST_USER_MSG + 101);
 const size_t  XPAD_DLL_START_LIVE_ACQ_MSG	=	(yat::FIRST_USER_MSG + 102);
 const size_t  XPAD_DLL_CALIBRATE		    =	(yat::FIRST_USER_MSG + 103);
+const size_t  XPAD_DLL_GET_ASYNC_IMAGES_MSG	=	(yat::FIRST_USER_MSG + 105);
 
 //- Xpix
 #include <xpci_interface.h>
@@ -57,6 +58,12 @@ using namespace std;
 const int FIRST_TIMEOUT = 8000;
 #define XPIX_NOT_USED_YET 0
 #define XPIX_V1_COMPATIBILITY 0
+
+const int CHIP_NB_ROW       = 120;
+const int CHIP_NB_COLUMN    = 80;
+
+const int TWO_BYTES         = 2;
+const int FOUR_BYTES        = 4;
 
 
 namespace lima
@@ -174,6 +181,8 @@ namespace Xpad
         void setSpecificParameters( unsigned deadtime, unsigned init,
 								    unsigned shutter, unsigned ovf,
 								    unsigned n,       unsigned p,
+                                    unsigned busy_out_sel,
+                                    bool geom_corr,
 								    unsigned GP1,     unsigned GP2,    unsigned GP3,      unsigned GP4);
 
         //! Set the Calibration Adjusting number of iteration
@@ -199,6 +208,7 @@ namespace Xpad
         unsigned int    m_exp_time_usec;
 		int         	m_timeout_ms;
         bool            m_stop_asked;
+        Timestamp       m_start_sec,m_end_sec;
 
 
 		//---------------------------------
@@ -213,6 +223,9 @@ namespace Xpad
         unsigned short 			m_xpad_model;
         string                  m_calibration_path;
         unsigned int            m_calibration_adjusting_number;
+        //- Xpad async stuff
+        int                     m_nb_last_aquired_image;
+        int                     m_nb_image_done;
         //unsigned short*         m_dacl;
         //- Specific xpad stuff
         unsigned int m_time_between_images_usec; //- Temps entre chaque image
@@ -221,6 +234,8 @@ namespace Xpad
 	    unsigned int m_ovf_refresh_time_usec;
         unsigned int m_specific_param_n;
         unsigned int m_specific_param_p;
+        unsigned int m_busy_out_sel;
+        unsigned int m_geom_corr;
         unsigned int m_specific_param_GP1;
 	    unsigned int m_specific_param_GP2;
 	    unsigned int m_specific_param_GP3;

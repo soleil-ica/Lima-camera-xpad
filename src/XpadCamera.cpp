@@ -146,6 +146,8 @@ void Camera::start()
 
     m_stop_asked = false;
 	unsigned long local_nb_frames = 0;
+    m_nb_image_done = 0;
+    m_nb_last_aquired_image = 0;
 
     //-	((80 colonnes * 7 chips) * taille du pixel) * 120 lignes * nb_modules
 	if (m_pixel_depth == B2)
@@ -727,188 +729,163 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 			//-----------------------------------------------------    
 			case XPAD_DLL_START_ASYNC_MSG:
 			{
-				/*************
-			 	DEB_TRACE() <<"Camera::->XPAD_DLL_START_FAST_ASYNC_MSG";
+				DEB_TRACE() << "=========================================";
+                DEB_TRACE() << "Camera::->XPAD_DLL_START_ASYNC_MSG";
 
-				 //- A mettre dans le prepareAcq?
-				 // allocate multiple buffers
-				 DEB_TRACE() <<"allocating images array (" << m_nb_frames << " images)";
-				 pSeqImage = new uint16_t* [ m_nb_frames ];
+                //- Declare local temporary image buffer
+				void**	image_array;
 
-				  DEB_TRACE() <<"allocating every image pointer of the images array (1 image full size = "<< m_full_image_size_in_bytes << ") ";
-				  for( int i=0 ; i < m_nb_frames ; i++ )
-					  pSeqImage[i] = new uint16_t[ m_full_image_size_in_bytes / 2 ];
+				// allocate multiple buffers
+				DEB_TRACE() <<"Allocating images array (" << m_nb_frames << " images)";
+				if(m_imxpad_format == 0) //- aka 16 bits
+					image_array = reinterpret_cast<void**>(new uint16_t* [ m_nb_frames ]);
+				else //- aka 32 bits
+					image_array = reinterpret_cast<void**>(new uint32_t* [ m_nb_frames ]);
+                
+                		DEB_TRACE() <<"Allocating every image pointer of the images array (1 image full size = "<< m_full_image_size_in_bytes << ") ";
+				for( int i=0 ; i < m_nb_frames ; i++ )
+				{
+					if(m_imxpad_format == 0) //- aka 16 bits
+						image_array[i] = new uint16_t [ m_full_image_size_in_bytes / 2 ];//we allocate a number of pixels
+					else //- aka 32 bits
+						image_array[i] = new uint32_t [ m_full_image_size_in_bytes / 4 ];//we allocate a number of pixels
+				}
 
-				  m_status = Camera::Exposure;
+                m_status = Camera::Exposure;
 
-				  //- Start the img sequence
-				  DEB_TRACE() <<"start acquiring a sequence of images";
-				  cout << " ============================================== " << endl;
-				  cout << "Parametres pour getImgSeqAs: "<< endl;
-				  cout << "m_pixel_depth 	= "<< m_pixel_depth << endl;
-				  cout << "m_modules_mask = "<< m_modules_mask << endl;
-				  cout << "m_chip_number 	= "<< m_chip_number << endl;
-				  cout << "m_trigger_type = "<< m_trigger_type << endl;
-				  cout << "m_exp_time 	= "<< m_exp_time << endl;
-				  cout << "m_time_unit 	= "<< m_time_unit << endl;
-				  cout << "m_nb_frames 	= "<< m_nb_frames << endl;
+                //- Start the img sequence
+                DEB_TRACE() <<"Start acquiring asynchronously a sequence of image(s)";
 
+                m_start_sec = Timestamp::now();
 
-				  //- Start the acquisition in Async mode
-				  if ( xpci_getImgSeqAs(	m_pixel_depth,
-					  m_modules_mask,
-					  m_chip_number,
-					  NULL, //- callback fct not used
-					  10000, //- callback timeout: 10s
-					  m_trigger_type,
-					  m_exp_time,
-					  m_time_unit,
-					  m_nb_frames,
-					  (void**)pSeqImage,
-					  FIRST_TIMEOUT,
-					  NULL) //- user Parameter not used
-					  == -1)
+                if ( xpci_getImgSeqAs(	m_pixel_depth, 
+                                        m_modules_mask,
+                                        m_chip_number,
+                                        NULL,//- to be clarified by impxad
+                                        XPIX_V1_COMPATIBILITY,//timeout
+                                        XPIX_V1_COMPATIBILITY,
+                                        XPIX_V1_COMPATIBILITY,
+                                        XPIX_V1_COMPATIBILITY,
+                                        m_nb_frames,
+                                        (void**)image_array,
+                                        8000, //- to be clarified by impxad
+                                        NULL,//- to be clarified by impxad
+                                        m_nb_frames //- to be clarified by impxad
+                                        ) == -1)              
+                {
+                    DEB_ERROR() << "Error: xpci_getImgSeqAs has returned an error..." ;
 
-				  {
-					  DEB_ERROR() << "Error: getImgSeq as returned an error..." ;
+                    DEB_TRACE() << "Freeing each image pointer of the image(s) array";
+                    for(int i=0 ; i < m_nb_frames ; i++)
+                    {
+                        if(m_imxpad_format == 0) //- aka 16 bits
+                            delete[] reinterpret_cast<uint16_t*>(image_array[i]);
+                        else //- aka 32 bits
+                            delete[] reinterpret_cast<uint32_t*>(image_array[i]);
+                    }
 
-					  DEB_TRACE() << "Freeing every image pointer of the images array";
-					  for(int i=0 ; i < m_nb_frames ; i++)
-						  delete[] pSeqImage[i];
+                    DEB_TRACE() << "Freeing the image(s) array";
+                    if(m_imxpad_format == 0) //- aka 16 bits
+                        delete[] reinterpret_cast<uint16_t**>(image_array);
+                    else //- aka 32 bits
+                        delete[] reinterpret_cast<uint32_t**>(image_array);
 
-					  DEB_TRACE() << "Freeing images array";
-					  delete[] pSeqImage;
+                    m_status = Camera::Fault;
+                    throw LIMA_HW_EXC(Error, "xpci_getImgSeqAs has returned an error ! ");
+                }
 
-					  m_status = Camera::Fault;
-					  throw LIMA_HW_EXC(Error, "xpci_getImgSeqAs as returned an error...");
-				  }
+                //- Post XPAD_DLL_GET_ASYNC_IMAGES_MSG msg
+                this->post(new yat::Message(XPAD_DLL_GET_ASYNC_IMAGES_MSG), kPOST_MSG_TMO);
+            }
+            break;
 
-				  m_status = Camera::Readout;
+            //-----------------------------------------------------    
+        case XPAD_DLL_GET_ASYNC_IMAGES_MSG:
+            {
+                DEB_TRACE() <<"Camera::->XPAD_DLL_GET_ASYNC_IMAGES_MSG";
+                
+                //- TODO: set the corrected img 
+                void*   m_one_image;
 
-				  int nb_images_aquired_before = 0;
-				  int nb_images_acquired = 0;
-				  int current_treated_image = 0;
+                if(m_imxpad_format == 0) //- aka 16 bits
+                    m_one_image = new uint16_t [ m_full_image_size_in_bytes / TWO_BYTES ];
+                else //- aka 32 bits
+                    m_one_image = new uint32_t [ m_full_image_size_in_bytes / FOUR_BYTES ];
 
-							  size_t n1 = 6 + 80 * m_chip_number;
-							  size_t n2 = 80 * m_chip_number;
-				  uint16_t OneLine[n1];
+                while (m_nb_image_done != m_nb_frames)
+                {
+                    m_nb_last_aquired_image = xpci_getNumberLastAcquiredAsyncImage();
+                    DEB_TRACE() << "Last acquired image = " << m_nb_last_aquired_image;
 
-				  //- While acquisition is running
-				  while(xpci_asyncReadStatus() || current_treated_image < m_nb_frames)
-				  {
-					  //- for debug
-					  //yat::ThreadingUtilities::sleep(0,50000000); //50 ms
+                    for(int i = m_nb_image_done; i<m_nb_last_aquired_image; i++ )
+                    {
+                        m_nb_image_done++;
 
-					  //DEB_TRACE() << "----------------------------";
-					  //DEB_TRACE() << "Nb images treated			= " << current_treated_image;
-						  do
-					  {
-						nb_images_acquired = xpci_getGotImages();
-						if ( nb_images_acquired == nb_images_aquired_before )
-						yat::ThreadingUtilities::sleep(0,48000000); //48 ms
-						else
-						break;
-					  }
-					  while (1);
+                        if ( xpci_getAsyncImage(	(IMG_TYPE)m_imxpad_format, 
+                                                    m_modules_mask,
+                                                    m_chip_number,
+                                                    NULL,//- to be clarified by impxad
+                                                    (void*)m_one_image,
+                                                    i, //- image index to get
+                                                    NULL, //- corrected img
+                                                    m_geom_corr //- flag for activating correction
+                                                    ) == -1)           
 
-					 // DEB_TRACE() << "Nb images acquired			= " << nb_images_acquired;
-					  //DEB_TRACE() << "Nb images acquired before		= " << nb_images_aquired_before;
+                        {
+                            DEB_ERROR() << "Error: xpci_getAsyncImage has returned an error..." ;
 
-					  //- ATTENTION : //-MODIF-NL-ICA: THSI IS EXACTLY WHAT WE DON'T WANT!!!!!
-					  //- Xpix acquires a buffer sized according to m_module_number.
-					  //- Displayed/Lima image will be ALWAYS 560*960, even if some modules are not availables !
-					  //- Image zone where a module is not available will be set to "zero"
+                            DEB_TRACE() << "Freeing the image";
+                            if(m_imxpad_format == 0) //- aka 16 bits
+                                delete[] reinterpret_cast<uint16_t**>(m_one_image);
+                            else //- aka 32 bits
+                                delete[] reinterpret_cast<uint32_t**>(m_one_image);
 
-					  //XPIX LIB buffer						//Device requested buffer
-					  //--------------						//--------------
-					  //line 1 	mod1						//line 1 	mod1
-					  //line 1 	mod2						//line 2 	mod1
-					  //line 1 	mod3						//line 3 	mod1
-					  //...									//...
-					  //line 1	mod8						//line 120	mod1
-					  //--------------						//--------------
-					  //line 2 	mod1						//line 1 	mod2
-					  //line 2 	mod2						//line 2 	mod2
-					  //line 2 	mod3						//line 3 	mod2
-					  //...									//...
-					  //line 2	mod4						//line 120	mod2
-					  //--------------						//--------------
-					  //...									//...
-					  //--------------						//--------------
-					  //line 120 	mod1						//line 1 	mod8
-					  //line 120 	mod2						//line 2 	mod8
-					  //line 120 	mod3						//line 3 	mod8
-					  //...									//...
-					  //line 120	mod8						//line 120	mod8
+                            m_status = Camera::Fault;
+                            throw LIMA_HW_EXC(Error, "xpci_getAsyncImage has returned an error ! ");
+                        }
 
-					  int	i=0, j=0, k=0;
-					  //- clean each image and call new frame for each frame
-					  StdBufferCbMgr& buffer_mgr = m_buffer_cb_mgr;
-					  //DEB_TRACE() <<"Cleanning each acquired image and publish it through newFrameReady ...";
-					  for( i = nb_images_aquired_before; i<nb_images_acquired; i++ )
-					  {
-						  nb_images_aquired_before = nb_images_acquired;
+                        //- Publish each image and call new frame ready for each frame
+                        StdBufferCbMgr& buffer_mgr = m_buffer_cb_mgr;
+                        DEB_TRACE() << "Publishing image : " << i << " through newFrameReady()";
+                        m_start_sec = Timestamp::now();
+                        
+                        m_current_nb_frames = i;
+                        int buffer_nb, concat_frame_nb;
+                        buffer_mgr.setStartTimestamp(Timestamp::now());
+                        buffer_mgr.acqFrameNb2BufferNb(i, buffer_nb, concat_frame_nb);
 
-						  current_treated_image++;
+                        void* lima_img_ptr;
+                        if(m_imxpad_format == 0) //- aka 16 bits
+                            lima_img_ptr = (uint16_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
+                        else //- aka 32 bits
+                            lima_img_ptr = (uint32_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
 
-						  pOneImage = pSeqImage[i];
+                        //- copy image in the lima buffer
+                        if(m_imxpad_format == 0) //- aka 16 bits
+                            memcpy((uint16_t *)lima_img_ptr, (uint16_t *)m_one_image,m_full_image_size_in_bytes);
+                        else //- aka 32 bits
+                            memcpy((uint32_t *)lima_img_ptr, (uint32_t *)m_one_image,m_full_image_size_in_bytes);
 
-						  int buffer_nb, concat_frame_nb;
-						  buffer_mgr.setStartTimestamp(Timestamp::now());
+                        HwFrameInfoType frame_info;
+                        frame_info.acq_frame_nb = i;
+                        //- raise the image to Lima
+                        buffer_mgr.newFrameReady(frame_info);
+                        DEB_TRACE() << "image " << i <<" published with newFrameReady()" ;
+                    }
+                }   
+                
+                //- Finished
+                m_start_sec = Timestamp::now();
+                DEB_TRACE() << "Freeing last image pointer";
+                delete[] m_one_image;
+                m_status = Camera::Ready;
+                m_end_sec = Timestamp::now() - m_start_sec;
+                DEB_TRACE() << "Time for freeing memory: now Ready! (sec) = " << m_end_sec;
+                DEB_TRACE() << "m_status is Ready";
+            }
+            break;
 
-						  buffer_mgr.acqFrameNb2BufferNb(i, buffer_nb, concat_frame_nb);
-
-						  uint16_t *ptr = (uint16_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
-
-						  //clean the ptr with zero memory, pixels of a not available module are set to "0"
-						  memset((uint16_t *)ptr,0,m_image_size.getWidth() * m_image_size.getHeight() * 2);
-						  // DEB_TRACE() << "---- Niveau ------- 5 ---- ";
-
-						  //iterate on all lines of all modules returned by xpix API
-						  for(j = 0; j < 120 * m_module_number; j++)
-						  {
-							  //DEB_TRACE() << "---- Niveau ------- 5.1 ---- ";
-							  ::memset(OneLine, 0, n1 * sizeof(uint16_t));
-
-							  //copy entire line with its header and footer
-							  //DEB_TRACE() << "---- Niveau ------- 5.2 ---- ";
-
-							  for ( k = 0; k < n1; k++ )
-								  OneLine[k] = pOneImage[j * n1 + k];
-
-							  //compute "offset line" where to copy OneLine[] in the *ptr, to ensure that the lines are copied in order of modules
-							  //DEB_TRACE() << "---- Niveau ------- 5.3 ---- ";
-							  int offset = ((120 * (OneLine[1] )) + (OneLine[4] - 1));
-
-							  //copy cleaned line in the lima buffer
-							  //DEB_TRACE() << "---- Niveau ------- 5.4 ---- ";
-							  for(k = 0; k < n2; k++)
-								  ptr[offset * n2 + k] = OneLine[5 + k];
-						  }
-						  //DEB_TRACE() << "---- Niveau ------- 6 ---- ";
-
-						  DEB_TRACE() << "image# " << i <<" cleaned" ;
-						  HwFrameInfoType frame_info;
-						  //DEB_TRACE() << "---- Niveau ------- 7 ---- ";
-						  frame_info.acq_frame_nb = i;
-						  //- raise the image to lima
-						  buffer_mgr.newFrameReady(frame_info);
-						  //DEB_TRACE() << "---- Niveau ------- 8 ---- ";
-					  }
-				  }
-
-				  DEB_TRACE() <<"Freeing every image pointer of the images array";
-				  for(int j=0 ; j < m_nb_frames ; j++)
-					  delete[] pSeqImage[j];
-				  DEB_TRACE() <<"Freeing images array";
-				  delete[] pSeqImage;
-				  m_status = Camera::Ready;
-				  DEB_TRACE() <<"m_status is Ready";
-			
-                    */
-		  }
-		  break;
-
+            //-----------------------------------------------------    
             case XPAD_DLL_CALIBRATE:
                 {
                     DEB_TRACE() <<"Camera::->XPAD_DLL_CALIBRATE";
@@ -922,9 +899,9 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                         {
                             DEB_TRACE() <<"XPAD_DLL_CALIBRATE->OTN_SLOW";   
 
-                            if(imxpad_calibrationOTN_SLOW(m_modules_mask,(char*)m_calibration_path.c_str(),m_calibration_adjusting_number) == 0)
+                            if(imxpad_calibration_OTN_slow(m_modules_mask,(char*)m_calibration_path.c_str(),m_calibration_adjusting_number) == 0)
                             {
-                                DEB_TRACE() << "calibrateOTNSlow -> imxpad_calibrationOTN_SLOW -> OK" ;
+                                DEB_TRACE() << "calibrateOTNSlow -> imxpad_calibration_OTN_slow -> OK" ;
                             }
                             else
                             {
@@ -935,7 +912,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 
                                 m_status = Camera::Fault;
                                 //- TODO: get the xpix error 
-                                throw LIMA_HW_EXC(Error, "Error in imxpad_calibrationOTN_SLOW!");
+                                throw LIMA_HW_EXC(Error, "Error in imxpad_calibration_OTN_slow!");
                             }
                         }
                         break;
@@ -1291,10 +1268,12 @@ void Camera::decrementITHL()
 //-----------------------------------------------------
 //		Set the specific parameters
 //-----------------------------------------------------
-void Camera::setSpecificParameters( unsigned deadtime, unsigned init,
-								    unsigned shutter, unsigned ovf,
-								    unsigned n,       unsigned p,
-								    unsigned GP1,     unsigned GP2,    unsigned GP3,      unsigned GP4)
+void Camera::setSpecificParameters(    unsigned deadtime, unsigned init,
+                                       unsigned shutter, unsigned ovf,
+                                       unsigned n,       unsigned p,
+                                       unsigned busy_out_sel,
+                                       bool geom_corr,
+                                       unsigned GP1,     unsigned GP2,    unsigned GP3,      unsigned GP4)
 {
 
 	DEB_MEMBER_FUNCT();
@@ -1307,6 +1286,8 @@ void Camera::setSpecificParameters( unsigned deadtime, unsigned init,
 	m_ovf_refresh_time_usec     = ovf;
     m_specific_param_n          = n;
     m_specific_param_p          = p;
+    m_busy_out_sel              = busy_out_sel;
+    m_geom_corr                 = (unsigned int)geom_corr;
     m_specific_param_GP1		= GP1;
 	m_specific_param_GP2		= GP2;
 	m_specific_param_GP3		= GP3;

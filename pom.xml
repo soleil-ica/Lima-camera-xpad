@@ -10,7 +10,7 @@
 
 	<groupId>fr.soleil.lib.Lima.Camera</groupId>
 	<artifactId>LimaXpad-${aol}-shared-${mode}</artifactId>
-	<version>1.3.0</version>
+	<version>1.3.1-SNAPSHOT</version>
 	
 	<packaging>nar</packaging>
 	<name>LimaXpad</name>
@@ -20,48 +20,19 @@
 		<dependency>
 			<groupId>fr.soleil.lib</groupId>
 			<artifactId>LimaCore-${aol}-shared-${mode}</artifactId>
-			<version>1.3.0</version>
+			<version>1.3.1-SNAPSHOT</version>
 		</dependency>
-		<dependency>
+		<!--<dependency>
 			<groupId>fr.in2p3</groupId>
 			<artifactId>Xpix-${aol}-static-${mode}</artifactId>
 			<version>2.0.9</version>
-		</dependency>
+		</dependency>-->
 		<dependency>
 			<groupId>fr.soleil.lib</groupId>
 			<artifactId>YAT-${aol}-${library}-${mode}</artifactId>
 		</dependency>
 	</dependencies>
-	
-<!--<build>
-		<plugins>
-			<plugin>
-				<groupId>org.freehep</groupId>
-				<artifactId>freehep-nar-plugin</artifactId>
-				<configuration>
- 				<cpp>
- 					<systemIncludePaths>
- 						<systemIncludePath>/home/imxpad/ICA/xpix_library_2_3/imxpad_lib/xpci_lib</systemIncludePath>
- 						<systemIncludePath>/home/informatique/ica/langlois/ImXpad/xpix_2_0_9/imxpad_lib/xpci_lib</systemIncludePath>
- 					</systemIncludePaths>
- 				</cpp>
 
-
- 				<linker>
- 					<libs>
- 						<lib>
- 							<name>xpci_lib</name>
- 							<type>static</type>
- 							<directory>/home/imxpad/ICA/xpix_library_2_3/imxpad_lib/xpci_lib</directory>
- 							<directory>/home/informatique/ica/langlois/ImXpad/xpix_2_0_9/imxpad_lib/xpci_lib</directory>
- 						</lib>
- 					</libs>
- 				</linker>
- 			</configuration>
-			</plugin>
-		</plugins>
-	</build>-->
-	
 	<build>
         <plugins>
             <plugin>
@@ -77,7 +48,21 @@
 						<options>
 							<option>-w</option>
 						</options>
+						
+						<systemIncludePaths>
+							<systemIncludePath>/home/informatique/ica/langlois/ImXpad/xpix_2_1_0b/imxpad_lib/xpci_lib</systemIncludePath>
+						</systemIncludePaths>
+						
 					</cpp>
+					<linker>
+						<libs>
+							<lib>
+								<name>xpci_lib</name>
+								<type>static</type>
+								<directory>/home/informatique/ica/langlois/ImXpad/xpix_2_1_0b/imxpad_lib/xpci_lib</directory>
+							</lib>
+						</libs>
+					</linker>
 					<libraries>
 						<library>
 							<type>shared</type>
