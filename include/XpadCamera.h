@@ -223,9 +223,8 @@ namespace Xpad
         unsigned short 			m_xpad_model;
         string                  m_calibration_path;
         unsigned int            m_calibration_adjusting_number;
-        //- Xpad async stuff
-        int                     m_nb_last_aquired_image;
-        int                     m_nb_image_done;
+        void**                  m_image_array;
+
         //unsigned short*         m_dacl;
         //- Specific xpad stuff
         unsigned int m_time_between_images_usec; //- Temps entre chaque image

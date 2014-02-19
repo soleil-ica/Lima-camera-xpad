@@ -47,6 +47,7 @@ m_buffer_ctrl_mgr(m_buffer_cb_mgr)
     m_chip_number       = 7; 
     m_pixel_depth       = B2; //- 16 bits
     m_nb_frames         = 1;
+    m_image_array       = 0;
 
     m_status            = Camera::Ready;
     m_acquisition_type	= Camera::SYNC;
@@ -79,7 +80,7 @@ m_buffer_ctrl_mgr(m_buffer_cb_mgr)
 	    //- Get Modules that are ready
 	    if (xpci_modAskReady(&m_modules_mask) == 0)
 	    {
-		    DEB_TRACE() << "Ask modules that are ready: OK (modules mask = " << std::hex << m_modules_mask << ")" ;
+		    DEB_TRACE() << "Ask modules that are ready: OK (modules mask = 0x" << std::hex << m_modules_mask << ")" ;
 		    m_module_number = xpci_getModNb(m_modules_mask);
             
 		    if (m_module_number != 0)
@@ -146,8 +147,6 @@ void Camera::start()
 
     m_stop_asked = false;
 	unsigned long local_nb_frames = 0;
-    m_nb_image_done = 0;
-    m_nb_last_aquired_image = 0;
 
     //-	((80 colonnes * 7 chips) * taille du pixel) * 120 lignes * nb_modules
 	if (m_pixel_depth == B2)
@@ -343,10 +342,10 @@ void Camera::setTrigMode(TrigMode mode)
         m_imxpad_trigger_mode = 1;
 		break;
 	case ExtTrigSingle:
-		m_imxpad_trigger_mode = 2; //- 1 trig externe declenche N gates internes (les gate etant reglé par soft)
+		m_imxpad_trigger_mode = 2; //- 1 trig externe declenche N gates internes (les gate etant reglï¿½ par soft)
 		break;
     case ExtTrigMult:
-		m_imxpad_trigger_mode = 3; //- N trig externes declenchent N gates internes (les gate etant reglé par soft) 
+		m_imxpad_trigger_mode = 3; //- N trig externes declenchent N gates internes (les gate etant reglï¿½ par soft) 
 		break;
 	default:
 		DEB_ERROR() << "Error: Trigger mode unsupported: only IntTrig, ExtGate, ExtTrigSingle or ExtTrigMult" ;
@@ -370,10 +369,10 @@ void Camera::getTrigMode(TrigMode& mode)
 		mode = ExtGate;
 		break;
 	case 2:
-		mode = ExtTrigSingle; //- 1 trig externe declenche N gates internes (les gate etant reglé par soft)
+		mode = ExtTrigSingle; //- 1 trig externe declenche N gates internes (les gate etant reglï¿½ par soft)
 		break;
     case 3:
-		mode = ExtTrigMult; //- N trig externes declenchent N gates internes (les gate etant reglé par soft) 
+		mode = ExtTrigMult; //- N trig externes declenchent N gates internes (les gate etant reglï¿½ par soft) 
 		break;
 	default:
 		break;
@@ -733,22 +732,23 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                 DEB_TRACE() << "Camera::->XPAD_DLL_START_ASYNC_MSG";
 
                 //- Declare local temporary image buffer
-				void**	image_array;
+                
+                                m_image_array = 0;
 
 				// allocate multiple buffers
 				DEB_TRACE() <<"Allocating images array (" << m_nb_frames << " images)";
 				if(m_imxpad_format == 0) //- aka 16 bits
-					image_array = reinterpret_cast<void**>(new uint16_t* [ m_nb_frames ]);
+					m_image_array = reinterpret_cast<void**>(new uint16_t* [ m_nb_frames ]);
 				else //- aka 32 bits
-					image_array = reinterpret_cast<void**>(new uint32_t* [ m_nb_frames ]);
+					m_image_array = reinterpret_cast<void**>(new uint32_t* [ m_nb_frames ]);
                 
                 		DEB_TRACE() <<"Allocating every image pointer of the images array (1 image full size = "<< m_full_image_size_in_bytes << ") ";
 				for( int i=0 ; i < m_nb_frames ; i++ )
 				{
 					if(m_imxpad_format == 0) //- aka 16 bits
-						image_array[i] = new uint16_t [ m_full_image_size_in_bytes / 2 ];//we allocate a number of pixels
+						m_image_array[i] = new uint16_t [ m_full_image_size_in_bytes / 2 ];//we allocate a number of pixels
 					else //- aka 32 bits
-						image_array[i] = new uint32_t [ m_full_image_size_in_bytes / 4 ];//we allocate a number of pixels
+						m_image_array[i] = new uint32_t [ m_full_image_size_in_bytes / 4 ];//we allocate a number of pixels
 				}
 
                 m_status = Camera::Exposure;
@@ -767,7 +767,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                                         XPIX_V1_COMPATIBILITY,
                                         XPIX_V1_COMPATIBILITY,
                                         m_nb_frames,
-                                        (void**)image_array,
+                                        (void**)m_image_array, //- (void*) cf imxpad
                                         8000, //- to be clarified by impxad
                                         NULL,//- to be clarified by impxad
                                         m_nb_frames //- to be clarified by impxad
@@ -779,16 +779,16 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                     for(int i=0 ; i < m_nb_frames ; i++)
                     {
                         if(m_imxpad_format == 0) //- aka 16 bits
-                            delete[] reinterpret_cast<uint16_t*>(image_array[i]);
+                            delete[] reinterpret_cast<uint16_t*>(m_image_array[i]);
                         else //- aka 32 bits
-                            delete[] reinterpret_cast<uint32_t*>(image_array[i]);
+                            delete[] reinterpret_cast<uint32_t*>(m_image_array[i]);
                     }
 
                     DEB_TRACE() << "Freeing the image(s) array";
                     if(m_imxpad_format == 0) //- aka 16 bits
-                        delete[] reinterpret_cast<uint16_t**>(image_array);
+                        delete[] reinterpret_cast<uint16_t**>(m_image_array);
                     else //- aka 32 bits
-                        delete[] reinterpret_cast<uint32_t**>(image_array);
+                        delete[] reinterpret_cast<uint32_t**>(m_image_array);
 
                     m_status = Camera::Fault;
                     throw LIMA_HW_EXC(Error, "xpci_getImgSeqAs has returned an error ! ");
@@ -806,29 +806,40 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                 
                 //- TODO: set the corrected img 
                 void*   m_one_image;
+                int nb_image_done = 0;
+                int nb_last_aquired_image = 0;
 
                 if(m_imxpad_format == 0) //- aka 16 bits
                     m_one_image = new uint16_t [ m_full_image_size_in_bytes / TWO_BYTES ];
                 else //- aka 32 bits
                     m_one_image = new uint32_t [ m_full_image_size_in_bytes / FOUR_BYTES ];
 
-                while (m_nb_image_done != m_nb_frames)
+                //- workaround to a bug in xpci_getNumberLastAcquiredAsyncImage(): have to wait a little before calling it
+                yat::ThreadingUtilities::sleep(1+m_exp_time_usec / 1e6);  //- wait at least exp time in sec + 1 sec
+
+                DEB_TRACE() << "m_nb_frames         = " << m_nb_frames;
+
+                while (nb_image_done != m_nb_frames)
                 {
-                    m_nb_last_aquired_image = xpci_getNumberLastAcquiredAsyncImage();
-                    DEB_TRACE() << "Last acquired image = " << m_nb_last_aquired_image;
+                    //- avoid spoofing the console
+                    yat::ThreadingUtilities::sleep(1);  //- wait 1 sec
 
-                    for(int i = m_nb_image_done; i<m_nb_last_aquired_image; i++ )
+                    nb_last_aquired_image = xpci_getNumberLastAcquiredAsyncImage();
+                    DEB_TRACE() << "nb_last_aquired_image = " << nb_last_aquired_image;
+                    DEB_TRACE() << "nb_image_done         = " << nb_image_done;
+                 
+                    for(int i = nb_image_done; i<nb_last_aquired_image; i++ )
                     {
-                        m_nb_image_done++;
+                        nb_image_done++;
 
-                        if ( xpci_getAsyncImage(	(IMG_TYPE)m_imxpad_format, 
+                        if ( xpci_getAsyncImage(        m_pixel_depth, 
                                                     m_modules_mask,
                                                     m_chip_number,
-                                                    NULL,//- to be clarified by impxad
+                                                    m_nb_frames,//- to be clarified by imxpad
                                                     (void*)m_one_image,
                                                     i, //- image index to get
                                                     NULL, //- corrected img
-                                                    m_geom_corr //- flag for activating correction
+                                                    0//m_geom_corr //- flag for activating correction
                                                     ) == -1)           
 
                         {
@@ -839,6 +850,21 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                                 delete[] reinterpret_cast<uint16_t**>(m_one_image);
                             else //- aka 32 bits
                                 delete[] reinterpret_cast<uint32_t**>(m_one_image);
+                                
+                            DEB_TRACE() << "Freeing each image pointer of the image(s) array";
+                            for(int i=0 ; i < m_nb_frames ; i++)
+                            {
+                                if(m_imxpad_format == 0) //- aka 16 bits
+                                    delete[] reinterpret_cast<uint16_t*>(m_image_array[i]);
+                                else //- aka 32 bits
+                                    delete[] reinterpret_cast<uint32_t*>(m_image_array[i]);
+                            }
+
+                            DEB_TRACE() << "Freeing the image(s) array";
+                            if(m_imxpad_format == 0) //- aka 16 bits
+                                delete[] reinterpret_cast<uint16_t**>(m_image_array);
+                            else //- aka 32 bits
+                                delete[] reinterpret_cast<uint32_t**>(m_image_array);
 
                             m_status = Camera::Fault;
                             throw LIMA_HW_EXC(Error, "xpci_getAsyncImage has returned an error ! ");
@@ -873,6 +899,24 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                         DEB_TRACE() << "image " << i <<" published with newFrameReady()" ;
                     }
                 }   
+                
+                DEB_TRACE() << "nb_last_aquired_image = " << nb_last_aquired_image;
+                DEB_TRACE() << "nb_image_done         = " << nb_image_done;
+                
+                DEB_TRACE() << "Freeing each image pointer of the image(s) array";
+                for(int i=0 ; i < m_nb_frames ; i++)
+                {
+                    if(m_imxpad_format == 0) //- aka 16 bits
+                        delete[] reinterpret_cast<uint16_t*>(m_image_array[i]);
+                    else //- aka 32 bits
+                        delete[] reinterpret_cast<uint32_t*>(m_image_array[i]);
+                }
+
+                DEB_TRACE() << "Freeing the image(s) array";
+                if(m_imxpad_format == 0) //- aka 16 bits
+                    delete[] reinterpret_cast<uint16_t**>(m_image_array);
+                else //- aka 32 bits
+                    delete[] reinterpret_cast<uint32_t**>(m_image_array);
                 
                 //- Finished
                 m_start_sec = Timestamp::now();
