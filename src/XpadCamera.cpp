@@ -59,6 +59,7 @@ m_buffer_ctrl_mgr(m_buffer_cb_mgr)
     else if	(xpad_model == "IMXPAD_S70")	m_xpad_model = IMXPAD_S70;
     else if	(xpad_model == "IMXPAD_S140")	m_xpad_model = IMXPAD_S140;
     else if	(xpad_model == "IMXPAD_S340")	m_xpad_model = IMXPAD_S340;
+    else if	(xpad_model == "IMXPAD_S420")	m_xpad_model = IMXPAD_S420;
     else if	(xpad_model == "IMXPAD_S540")	m_xpad_model = IMXPAD_S540;
     else
         throw LIMA_HW_EXC(Error, "Xpad Model not supported");
@@ -145,8 +146,6 @@ void Camera::prepare()
     m_image_array = 0;
     m_nb_image_done = 0;
     m_nb_last_aquired_image = 0;
-    
-   
     
     DEB_TRACE() << "m_acquisition_type = " << m_acquisition_type ;
     DEB_TRACE() << "Setting Exposure parameters with values: ";
@@ -279,7 +278,6 @@ void Camera::setPixelDepth(ImageType pixel_depth)
     case Bpp16:
         m_imxpad_format = 0;
         break;
-
     case Bpp32:
         m_imxpad_format = 1;
         break;
@@ -301,7 +299,6 @@ void Camera::getPixelDepth(ImageType& pixel_depth)
     case 0:
         pixel_depth = Bpp16;
         break;
-
     case 1:
         pixel_depth = Bpp32;
         break;	
@@ -328,6 +325,7 @@ void Camera::getDetectorModel(std::string& type)
     else if(m_xpad_model == IMXPAD_S70)     type = "IMXPAD_S70";
     else if(m_xpad_model == IMXPAD_S140)    type = "IMXPAD_S140";
     else if(m_xpad_model == IMXPAD_S340)    type = "IMXPAD_S340";
+    else if(m_xpad_model == IMXPAD_S420)    type = "IMXPAD_S420";
     else if(m_xpad_model == IMXPAD_S540)    type = "IMXPAD_S540";
     else throw LIMA_HW_EXC(Error, "Xpad Type not supported");
 }
@@ -610,22 +608,11 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 
                 m_start_sec = Timestamp::now();
 
-                if ( xpci_getImgSeqAs(	(IMG_TYPE)m_imxpad_format, 
-                                        m_modules_mask,
-                                        m_chip_number,
-                                        NULL,//- to be clarified by impxad
-                                        XPIX_V1_COMPATIBILITY,//timeout
-                                        XPIX_V1_COMPATIBILITY,
-                                        XPIX_V1_COMPATIBILITY,
-                                        XPIX_V1_COMPATIBILITY,
-                                        m_nb_frames,
-                                        (void**)m_image_array,
-                                        8000, //- to be clarified by impxad
-                                        NULL,//- to be clarified by impxad
-                                        m_nb_frames //- to be clarified by impxad
-                                        ) == -1)              
+                if ( xpci_getImgSeqAsync(	m_pixel_depth, 
+                                            m_modules_mask,
+                                            m_nb_frames ) == -1)              
                 {
-                    DEB_ERROR() << "Error: xpci_getImgSeqAs has returned an error..." ;
+                    DEB_ERROR() << "Error: xpci_getImgSeqAsync has returned an error..." ;
 
                     DEB_TRACE() << "Freeing each image pointer of the image(s) array";
                     for(int i=0 ; i < m_nb_frames ; i++)
@@ -643,7 +630,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                         delete[] reinterpret_cast<uint32_t**>(m_image_array);
 
                     m_status = Camera::Fault;
-                    throw LIMA_HW_EXC(Error, "xpci_getImgSeqAs has returned an error ! ");
+                    throw LIMA_HW_EXC(Error, "xpci_getImgSeqAsync has returned an error ! ");
                 }
 
                 //- Post XPAD_DLL_GET_ASYNC_IMAGES_MSG msg
