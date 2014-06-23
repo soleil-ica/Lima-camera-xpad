@@ -128,9 +128,9 @@ namespace Xpad
 		//! Load all the config G 
 		void loadAllConfigG(unsigned long modNum, unsigned long chipId , unsigned long* config_values);
 		//! Load a wanted config G with a wanted value
-		void loadConfigG(const vector<unsigned long>& reg_and_value);
+		void loadConfigG(unsigned long modNum, unsigned long chipId , unsigned long reg_id, unsigned long reg_value);
 		//! Load a known value to the pixel counters
-		void loadAutoTest(unsigned known_value);
+		void loadAutoTest(unsigned long known_value);
         //! Save the config L (DACL) to XPAD RAM
         void saveConfigL(unsigned long modMask, unsigned long calibId, unsigned long chipId, unsigned long curRow,unsigned long* values);
         //! Save the config G to XPAD RAM

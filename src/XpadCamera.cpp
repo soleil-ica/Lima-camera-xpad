@@ -29,11 +29,6 @@ using namespace lima;
 using namespace lima::Xpad;
 using namespace std;
 
-
-//- Const.
-static const int 	BOARDNUM 	= 0;
-
-
 //---------------------------
 //- Ctor
 //---------------------------
@@ -1075,13 +1070,20 @@ void Camera::loadAllConfigG(unsigned long modNum, unsigned long chipId , unsigne
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void Camera::loadConfigG(const vector<unsigned long>& reg_and_value)
+void Camera::loadConfigG(unsigned long modNum, unsigned long chipId , unsigned long reg_id, unsigned long reg_value )
 {
 	DEB_MEMBER_FUNCT();
 
-	if(xpci_modLoadConfigG(m_modules_mask, m_chip_number, reg_and_value[0], reg_and_value[1])==0)
+	//- Transform the module number into a module mask on 8 bits
+    //- eg: if modNum = 4, mask_local = 8
+    unsigned long mask_local_module = 0x00;
+    SET(mask_local_module,(modNum-1));// -1 because modNum start at 1
+    unsigned long mask_local_chip = 0x00;
+    SET(mask_local_chip,(chipId-1));// -1 because chipId start at 1
+
+	if(xpci_modLoadConfigG(mask_local_module, mask_local_chip, reg_id, reg_value)==0)
 	{
-		DEB_TRACE() << "loadConfigG: " << reg_and_value[0] << ", with value: " << reg_and_value[1] << " -> OK" ;
+		DEB_TRACE() << "loadConfigG: Register 0x" << std::hex << reg_id << ", with value: " << std::dec << reg_value << " -> OK" ;
 	}
 	else
 	{
@@ -1092,7 +1094,7 @@ void Camera::loadConfigG(const vector<unsigned long>& reg_and_value)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void Camera::loadAutoTest(unsigned known_value)
+void Camera::loadAutoTest(unsigned long known_value)
 {
 	DEB_MEMBER_FUNCT();
 
