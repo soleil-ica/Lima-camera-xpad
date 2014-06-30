@@ -297,6 +297,7 @@ bool SyncCtrlObj::checkTrigMode(TrigMode trig_mode)
 		case IntTrig:
 		case ExtTrigSingle:
 		case ExtGate:
+		case ExtTrigMult:
 			valid_mode = true;
 		break;
 

@@ -54,6 +54,10 @@ m_buffer_ctrl_mgr(m_buffer_cb_mgr)
     m_busy_out_sel                  = 0;
     m_calibration_adjusting_number  = 1;
     m_geom_corr                     = 0;
+	m_specific_param_GP1			= 0;
+	m_specific_param_GP2			= 0;
+	m_specific_param_GP3			= 0;
+	m_specific_param_GP4			= 0;
 
     if		(xpad_model == "BACKPLANE") 	m_xpad_model = BACKPLANE;
 	else if	(xpad_model == "HUB")	        m_xpad_model = HUB;
@@ -180,16 +184,16 @@ void Camera::start()
 							m_shutter_time_usec,
 							m_ovf_refresh_time_usec,
 							m_imxpad_trigger_mode,
-							XPIX_NOT_USED_YET,
-							XPIX_NOT_USED_YET,
+							m_specific_param_n,
+							m_specific_param_p,
 							local_nb_frames,
-							XPIX_NOT_USED_YET,
+							m_busy_out_sel,
 							m_imxpad_format,
 							XPIX_NOT_USED_YET,
-							XPIX_NOT_USED_YET,
-							XPIX_NOT_USED_YET,
-							XPIX_NOT_USED_YET,
-							XPIX_NOT_USED_YET);
+							m_specific_param_GP1,
+							m_specific_param_GP2,
+							m_specific_param_GP3,
+							m_specific_param_GP4);
 
 
 	if (m_nb_frames == 0) //- aka live mode
@@ -794,7 +798,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                                                     (void*)m_one_image,
                                                     image_counter, //- image index to get
                                                     NULL, //- corrected img
-                                                    0 //- flag for activating correction
+                                                    m_geom_corr //- flag for activating correction
                                                 ) == -1)           
 
                         {
@@ -1243,36 +1247,6 @@ void Camera::decrementITHL()
 }
 
 //-----------------------------------------------------
-//		Set the specific parameters
-//-----------------------------------------------------
-void Camera::setSpecificParameters(    unsigned deadtime, unsigned init,
-                                       unsigned shutter, unsigned ovf,
-                                       unsigned n,       unsigned p,
-                                       unsigned busy_out_sel,
-                                       bool geom_corr,
-                                       unsigned GP1,     unsigned GP2,    unsigned GP3,      unsigned GP4)
-{
-
-	DEB_MEMBER_FUNCT();
-
-	DEB_TRACE() << "Setting Specific Parameters ..." ;
-    
-	m_time_between_images_usec  = deadtime; //- Temps entre chaque image
-    m_time_before_start_usec    = init;     //- Temps initial
-    m_shutter_time_usec         = shutter;
-	m_ovf_refresh_time_usec     = ovf;
-    m_specific_param_n          = n;
-    m_specific_param_p          = p;
-    m_busy_out_sel              = busy_out_sel;
-    m_geom_corr                 = (unsigned int)geom_corr;
-    m_specific_param_GP1		= GP1;
-	m_specific_param_GP2		= GP2;
-	m_specific_param_GP3		= GP3;
-	m_specific_param_GP4		= GP4;
-}
-
-
-//-----------------------------------------------------
 //		decrement the ITHL
 //-----------------------------------------------------
 void Camera::setCalibrationAdjustingNumber(unsigned calibration_adjusting_number)
@@ -1282,3 +1256,123 @@ void Camera::setCalibrationAdjustingNumber(unsigned calibration_adjusting_number
     m_calibration_adjusting_number = calibration_adjusting_number;
 
 }
+
+//-----------------------------------------------------
+//		Set the deadtime
+//-----------------------------------------------------
+void Camera::setDeadTime(unsigned int dead_time)
+{
+	DEB_MEMBER_FUNCT();
+
+	//- Parameters checking
+	if (m_pixel_depth == B2) //- 16 bits
+	{
+		if (dead_time < 2000)
+			throw LIMA_HW_EXC(Error, "deadtime should be at least 2000 usec in 16 bits");
+	}
+	else //- 32 bits
+	{
+		if (dead_time < 5000)
+			throw LIMA_HW_EXC(Error, "deadtime should be at least 5000 usec in 32 bits");
+	}
+
+	m_time_between_images_usec  = dead_time; //- Temps entre chaque image
+}
+
+//-----------------------------------------------------
+//		Set the init time
+//-----------------------------------------------------
+void Camera::setInitTime(unsigned int init_time)
+{
+	DEB_MEMBER_FUNCT();
+
+	m_time_before_start_usec  = init_time; //- Temps initial
+}
+
+//-----------------------------------------------------
+//		Set the shutter time
+//-----------------------------------------------------
+void Camera::setShutterTime(unsigned int shutter_time)
+{
+	DEB_MEMBER_FUNCT();
+
+	m_shutter_time_usec  = shutter_time;
+}
+
+//-----------------------------------------------------
+//		Set the overflow time
+//-----------------------------------------------------
+void Camera::setOverflowTime(unsigned int overflow_time)
+{
+	DEB_MEMBER_FUNCT();
+
+	if (overflow_time < 4000)
+		throw LIMA_HW_EXC(Error, "overflow should be at least 4000 usec");
+
+	m_ovf_refresh_time_usec  = overflow_time;
+}
+
+//-----------------------------------------------------
+//		Set the n parameter
+//-----------------------------------------------------
+void Camera::setNParameter(unsigned int n)
+{
+	DEB_MEMBER_FUNCT();
+
+	m_specific_param_n  = n;
+}
+
+//-----------------------------------------------------
+//		Set the p parameter
+//-----------------------------------------------------
+void Camera::setPParameter(unsigned int p)
+{
+	DEB_MEMBER_FUNCT();
+
+	m_specific_param_p  = p;
+}
+
+//-----------------------------------------------------
+//		Set the busy out selection
+//-----------------------------------------------------
+void Camera::setBusyOutSel(unsigned int busy_out_sel)
+{
+	DEB_MEMBER_FUNCT();
+
+	m_busy_out_sel = busy_out_sel;
+}
+
+//-----------------------------------------------------
+//		enable/disable geom correction
+//-----------------------------------------------------
+void Camera::setGeomCorrection(bool geom_corr)
+{
+	DEB_MEMBER_FUNCT();
+
+	m_geom_corr  = (unsigned int)geom_corr;
+}
+
+//-----------------------------------------------------
+//		Set GeneralPurpose Params
+//-----------------------------------------------------
+void Camera::setGeneralPurposeParams( unsigned int GP1, unsigned int GP2, unsigned int GP3, unsigned int GP4)
+{
+	DEB_MEMBER_FUNCT();
+
+	m_specific_param_GP1		= GP1;
+	m_specific_param_GP2		= GP2;
+	m_specific_param_GP3		= GP3;
+	m_specific_param_GP4		= GP4;
+}
+
+//-----------------------------------------------------
+//		decrement the ITHL
+//-----------------------------------------------------
+void Camera::xpixDebug(bool enable)
+{
+    DEB_MEMBER_FUNCT();
+
+    xpci_debugMsg(enable);
+
+}
+

@@ -177,16 +177,30 @@ namespace Xpad
         void incrementITHL();
         //! decrement the ITHL
         void decrementITHL();
-        //! set the specific parameters (deadTime,init time, shutter ...
-        void setSpecificParameters( unsigned deadtime, unsigned init,
-								    unsigned shutter, unsigned ovf,
-								    unsigned n,       unsigned p,
-                                    unsigned busy_out_sel,
-                                    bool geom_corr,
-								    unsigned GP1,     unsigned GP2,    unsigned GP3,      unsigned GP4);
-
         //! Set the Calibration Adjusting number of iteration
         void setCalibrationAdjustingNumber(unsigned calibration_adjusting_number);
+
+		//! Set the deadtime
+		void setDeadTime(unsigned int dead_time);
+		//! Set the init time
+		void setInitTime(unsigned int init_time);
+		//! Set the shutter time
+		void setShutterTime(unsigned int shutter_time);
+		//! Set the overflow time
+		void setOverflowTime(unsigned int overflow_time);
+		//! Set the n param
+		void setNParameter(unsigned int n);
+		//! Set the p param
+		void setPParameter(unsigned int p);
+		//! Set the busy out selection
+		void setBusyOutSel(unsigned int busy_out_sel);
+		//! enable/disable geom correction
+		void setGeomCorrection(bool geom_corr);
+		//! Set GeneralPurpose Params
+		void setGeneralPurposeParams( unsigned int GP1, unsigned intGP2, unsigned int GP3, unsigned int GP4);
+
+		//! Xpix debug
+        void xpixDebug(bool enable);
 
 
 		//- yat::Task implementation
