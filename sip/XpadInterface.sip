@@ -33,7 +33,7 @@ namespace Xpad
 %End
 
   public:
-    Interface(Xpad::Camera& cam);
+    Interface(Xpad::Camera& cam /KeepReference/);
     virtual ~Interface();
 
     //- From HwInterface
