@@ -32,8 +32,10 @@ using namespace std;
 //---------------------------
 //- Ctor
 //---------------------------
-Camera::Camera(string xpad_model): 	m_buffer_cb_mgr(m_buffer_alloc_mgr),
-m_buffer_ctrl_mgr(m_buffer_cb_mgr)
+Camera::Camera(string xpad_model) : 
+m_buffer_cb_mgr(m_buffer_alloc_mgr),
+m_buffer_ctrl_mgr(m_buffer_cb_mgr),
+m_maximage_size_cb_active(false)
 {
 	DEB_CONSTRUCTOR();
 
@@ -58,6 +60,9 @@ m_buffer_ctrl_mgr(m_buffer_cb_mgr)
 	m_specific_param_GP2			= 0;
 	m_specific_param_GP3			= 0;
 	m_specific_param_GP4			= 0;
+	
+	m_doublepixel_corr				= false;
+	m_norm_factor					= 2.5;
 
     if		(xpad_model == "BACKPLANE") 	m_xpad_model = BACKPLANE;
 	else if	(xpad_model == "HUB")	        m_xpad_model = HUB;
@@ -87,7 +92,7 @@ m_buffer_ctrl_mgr(m_buffer_cb_mgr)
             
 		    if (m_module_number != 0)
 		    {
-			    DEB_TRACE() << "--> Number of Modules 		 = " << m_module_number ;			
+			    DEB_TRACE() << "--> Number of Modules	= " << m_module_number ;			
 		    }
 		    else
 		    {
@@ -114,8 +119,33 @@ m_buffer_ctrl_mgr(m_buffer_cb_mgr)
 		    throw LIMA_HW_EXC(Error, "No Modules are ready");
 	    }
 
-	    //ATTENTION: Modules should be ordered! 
-	    m_image_size = Size(80 * m_chip_number ,120 * m_module_number); //- MODIF-NL-ICA
+	    // ATTENTION: Modules should be ordered! 
+		/*if(correction == true)
+		{
+			if(m_xpad_model == IMXPAD_S140)
+			{
+				m_doublepixel_corr = true;
+				m_image_size = Size(578 ,243);
+			}
+			else if(m_xpad_model == IMXPAD_S540)
+			{
+				m_doublepixel_corr = true;
+				m_image_size = Size(578 * 1156);
+			}
+			else
+			{
+				m_doublepixel_corr = true;
+				m_image_size = Size(578 ,243);
+			}
+		}
+		else
+		{
+			m_image_size = Size(CHIP_NB_COLUMN * m_chip_number ,CHIP_NB_ROW * m_module_number);
+		}*/
+	    //- Test FL
+		//m_image_size = Size(578 ,243);
+		m_image_size = Size(CHIP_NB_COLUMN * m_chip_number ,CHIP_NB_ROW * m_module_number);
+        
 	    DEB_TRACE() << "--> Number of chips 		 = " << std::dec << m_chip_number ;
 	    DEB_TRACE() << "--> Image width 	(pixels) = " << std::dec << m_image_size.getWidth() ;
 	    DEB_TRACE() << "--> Image height	(pixels) = " << std::dec << m_image_size.getHeight() ;
@@ -149,16 +179,6 @@ void Camera::start()
 
     m_stop_asked = false;
 	unsigned long local_nb_frames = 0;
-
-    //-	((80 colonnes * 7 chips) * taille du pixel) * 120 lignes * nb_modules
-	if (m_pixel_depth == B2)
-	{
-		m_full_image_size_in_bytes = ((80 * m_chip_number) * 2)  * (120 * m_module_number);
-	} 
-	else if(m_pixel_depth == B4)
-	{
-		m_full_image_size_in_bytes = ((80 * m_chip_number) * 4 )  * (120 * m_module_number);
-	} 
 
 	DEB_TRACE() << "m_acquisition_type = " << m_acquisition_type ;
 
@@ -239,6 +259,13 @@ void Camera::getImageSize(Size& size)
 {
 	DEB_MEMBER_FUNCT();
 
+	if (m_doublepixel_corr)
+		m_image_size = Size(578,243); //- For S140 only
+	else if (m_geom_corr)
+		m_image_size = Size(578,1156); //- For S540 only
+	else
+		m_image_size = Size(CHIP_NB_COLUMN * m_chip_number ,CHIP_NB_ROW * m_module_number);
+
 	size = m_image_size;
 }
 
@@ -269,6 +296,7 @@ void Camera::setPixelDepth(ImageType pixel_depth)
 		m_pixel_depth = B4;
         m_imxpad_format = 1;
 		break;
+
 	default:
 		DEB_ERROR() << "Pixel Depth is unsupported: only 16 or 32 bits is supported" ;
 		throw LIMA_HW_EXC(Error, "Pixel Depth is unsupported: only 16 or 32 bits is supported");
@@ -309,13 +337,13 @@ void Camera::getDetectorType(string& type)
 void Camera::getDetectorModel(string& type)
 {
 	DEB_MEMBER_FUNCT();
-	if(m_xpad_model == BACKPLANE) type = "BACKPLANE";
-	else if(m_xpad_model == HUB) type = "HUB";
-	else if(m_xpad_model == IMXPAD_S70) type = "IMXPAD_S70";
-	else if(m_xpad_model == IMXPAD_S140) type = "IMXPAD_S140";
-	else if(m_xpad_model == IMXPAD_S340) type = "IMXPAD_S340";
-	else if(m_xpad_model == IMXPAD_S420) type = "IMXPAD_S420";
-	else if(m_xpad_model == IMXPAD_S540) type = "IMXPAD_S540";
+	if		(m_xpad_model == BACKPLANE)	type = "BACKPLANE";
+	else if	(m_xpad_model == HUB)			type = "HUB";
+	else if	(m_xpad_model == IMXPAD_S70)	type = "IMXPAD_S70";
+	else if	(m_xpad_model == IMXPAD_S140)	type = "IMXPAD_S140";
+	else if	(m_xpad_model == IMXPAD_S340)	type = "IMXPAD_S340";
+	else if	(m_xpad_model == IMXPAD_S420)	type = "IMXPAD_S420";
+	else if	(m_xpad_model == IMXPAD_S540)	type = "IMXPAD_S540";
     else throw LIMA_HW_EXC(Error, "Xpad Type not supported");
 }
 
@@ -491,13 +519,13 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				else //- aka 32 bits
 					image_array = reinterpret_cast<void**>(new uint32_t* [ m_nb_frames ]);
                 
-                		DEB_TRACE() <<"Allocating every image pointer of the images array (1 image full size = "<< m_full_image_size_in_bytes << ") ";
+                DEB_TRACE() <<"Allocating every image pointer of the images array";
 				for( int i=0 ; i < m_nb_frames ; i++ )
 				{
 					if(m_imxpad_format == 0) //- aka 16 bits
-						image_array[i] = new uint16_t [ m_full_image_size_in_bytes / 2 ];//we allocate a number of pixels
+						image_array[i] = new uint16_t [ m_image_size.getWidth() * m_image_size.getHeight() ];//we allocate a number of pixels
 					else //- aka 32 bits
-						image_array[i] = new uint32_t [ m_full_image_size_in_bytes / 4 ];//we allocate a number of pixels
+						image_array[i] = new uint32_t [ m_image_size.getWidth() * m_image_size.getHeight() ];//we allocate a number of pixels
 				}
 
 				m_status = Camera::Exposure;
@@ -570,9 +598,27 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 
 					//- copy image in the lima buffer
 					if(m_imxpad_format == 0) //- aka 16 bits
-						memcpy((uint16_t *)lima_img_ptr, (uint16_t *)image_array[i],m_full_image_size_in_bytes);
+					{
+						if(m_doublepixel_corr) //- For S140 only
+						{	
+							uint16_t corrected_image[578][243];//- TODO: to be const inted
+							doublePixelCorrection<uint16_t>((uint16_t *)image_array[i],corrected_image);
+							memcpy((uint16_t *)lima_img_ptr, (uint16_t *)corrected_image,m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint16_t));
+						}
+						else //- no double pix correction
+							memcpy((uint16_t *)lima_img_ptr, (uint16_t *)image_array[i],m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint16_t));
+					}
 					else //- aka 32 bits
-						memcpy((uint32_t *)lima_img_ptr, (uint32_t *)image_array[i],m_full_image_size_in_bytes);
+					{
+						if(m_doublepixel_corr)
+						{
+							uint32_t corrected_image[578][243];//- TODO: to be const inted
+							doublePixelCorrection<uint32_t>((uint32_t *)image_array[i],corrected_image);
+							memcpy((uint32_t *)lima_img_ptr, (uint32_t *)corrected_image,m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint32_t));
+						}
+						else
+							memcpy((uint32_t *)lima_img_ptr, (uint32_t *)image_array[i],m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint32_t));
+					}
 
 					HwFrameInfoType frame_info;
 					frame_info.acq_frame_nb = i;
@@ -603,7 +649,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
             //-----------------------------------------------------    
 			case XPAD_DLL_START_LIVE_ACQ_MSG:
 			{
-				DEB_TRACE() 	<< "=========================================";
+				DEB_TRACE() << "=========================================";
                 DEB_TRACE() <<"Camera::->XPAD_DLL_START_LIVE_ACQ_MSG";
 
 				int one_frame = 1;
@@ -613,26 +659,23 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 
 				// allocate multiple buffers
 				DEB_TRACE() <<"Allocating images array (" << one_frame << " images)";
-				if(m_pixel_depth == B2)
-					image_array = reinterpret_cast<void**>(new uint16_t* [ one_frame ]);
-				else//B4
-					image_array = reinterpret_cast<void**>(new uint32_t* [ one_frame ]);
-
-				DEB_TRACE() <<"Allocating every image pointer of the images array (1 image full size = "<< m_full_image_size_in_bytes << ") ";
-				for( int i=0 ; i < one_frame ; i++ )
+				if(m_imxpad_format == 0) //- aka 16 bits
 				{
-					if(m_pixel_depth == B2)
-						image_array[i] = new uint16_t [ m_full_image_size_in_bytes / 2 ];//we allocate a number of pixels
-					else //B4
-						image_array[i] = new uint32_t [ m_full_image_size_in_bytes / 4 ];//we allocate a number of pixels
+					image_array = reinterpret_cast<void**>(new uint16_t* [ one_frame ]);
+					image_array[0] = new uint16_t [ m_image_size.getWidth() * m_image_size.getHeight() ];//we allocate a number of pixels
+				}
+				else //- aka 32 bits
+				{
+					image_array = reinterpret_cast<void**>(new uint32_t* [ one_frame ]);
+					image_array[0] = new uint32_t [ m_image_size.getWidth() * m_image_size.getHeight() ];//we allocate a number of pixels
 				}
 
 				m_status = Camera::Exposure;
 
 				//- Start the img sequence
-				DEB_TRACE() <<"Start acquiring a sequence of images";
+				DEB_TRACE() <<"Start acquiring an image";
 
-				if ( xpci_getImgSeq(	m_pixel_depth, 
+				if ( xpci_getImgSeq(	m_pixel_depth,  //- use the CPPM type
 					                    m_modules_mask,
 					                    m_chip_number,
                             			one_frame,
@@ -644,20 +687,17 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 					                    XPIX_V1_COMPATIBILITY) == -1)
 				{
 					DEB_ERROR() << "Error: getImgSeq as returned an error..." ;
+					DEB_TRACE() << "Freeing the image pointer of the image array";
+					
+					if(m_imxpad_format == 0) //- aka 16 bits
+						delete[] reinterpret_cast<uint16_t*>(image_array[0]);
+					else //- aka 32 bits
+						delete[] reinterpret_cast<uint32_t*>(image_array[0]);
 
-					DEB_TRACE() << "Freeing every image pointer of the images array";
-					for(int i=0 ; i < one_frame ; i++)
-					{
-						if(m_pixel_depth == B2)
-							delete[] reinterpret_cast<uint16_t*>(image_array[i]);
-						else
-							delete[] reinterpret_cast<uint32_t*>(image_array[i]);
-					}
-
-					DEB_TRACE() << "Freeing images array";
-					if(m_pixel_depth == B2)
+					DEB_TRACE() << "Freeing the image array";
+					if(m_imxpad_format == 0) //- aka 16 bits
 						delete[] reinterpret_cast<uint16_t**>(image_array);
-					else//B4
+					else //- aka 32 bits
 						delete[] reinterpret_cast<uint32_t**>(image_array);
 
 					m_status = Camera::Fault;
@@ -670,50 +710,62 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 								<< "\nall images are acquired"
 								<< "\n#######################" ;
 
-				int	i=0;
-
-				//- Publish each image and call new frame ready for each frame
+				//- Publish the image and call new frame ready for each frame
 				StdBufferCbMgr& buffer_mgr = m_buffer_cb_mgr;
-				DEB_TRACE() <<"Publish each acquired image through newFrameReady()";
-				for(i=0; i<one_frame; i++)
+				DEB_TRACE() <<"Publish the acquired image through newFrameReady()";
+				
+                m_current_nb_frames = 0;
+				int buffer_nb, concat_frame_nb;
+				buffer_mgr.setStartTimestamp(Timestamp::now());
+				buffer_mgr.acqFrameNb2BufferNb(m_current_nb_frames, buffer_nb, concat_frame_nb);
+
+				void* lima_img_ptr;
+				if(m_imxpad_format == 0) //- aka 16 bits
+					lima_img_ptr = (uint16_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
+				else //- aka 32 bits
+					lima_img_ptr = (uint32_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
+
+				//- copy image in the lima buffer
+				if(m_imxpad_format == 0) //- aka 16 bits
 				{
-                    m_current_nb_frames = i;
-					int buffer_nb, concat_frame_nb;
-					buffer_mgr.setStartTimestamp(Timestamp::now());
-					buffer_mgr.acqFrameNb2BufferNb(i, buffer_nb, concat_frame_nb);
-
-					void* lima_img_ptr;
-					if(m_pixel_depth == B2)
-						lima_img_ptr = (uint16_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
-					else//B4
-						lima_img_ptr = (uint32_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
-
-					//- copy image in the lima buffer
-					if(m_pixel_depth == B2)
-						memcpy((uint16_t *)lima_img_ptr, (uint16_t *)image_array[i],m_full_image_size_in_bytes);
-					else//B4
-						memcpy((uint32_t *)lima_img_ptr, (uint32_t *)image_array[i],m_full_image_size_in_bytes);
-
-					DEB_TRACE() << "image# " << i <<" cleaned" ;
-					HwFrameInfoType frame_info;
-					frame_info.acq_frame_nb = i;
-					//- raise the image to Lima
-					buffer_mgr.newFrameReady(frame_info);
+					if(m_doublepixel_corr) //- For S140 only
+					{	
+						uint16_t corrected_image[578][243];//- TODO: to be const inted
+						doublePixelCorrection<uint16_t>((uint16_t *)image_array[0],corrected_image);
+						memcpy((uint16_t *)lima_img_ptr, (uint16_t *)corrected_image,m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint16_t));
+					}
+					else //- no double pix correction
+						memcpy((uint16_t *)lima_img_ptr, (uint16_t *)image_array[0],m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint16_t));
 				}
-
-				DEB_TRACE() <<"Freeing every image pointer of the images array";
-				for(int i=0 ; i < one_frame ; i++)
+				else //- aka 32 bits
 				{
-					if(m_pixel_depth == B2)
-						delete[] reinterpret_cast<uint16_t*>(image_array[i]);
+					if(m_doublepixel_corr)
+					{
+						uint32_t corrected_image[578][243];//- TODO: to be const inted
+						doublePixelCorrection<uint32_t>((uint32_t *)image_array[0],corrected_image);
+						memcpy((uint32_t *)lima_img_ptr, (uint32_t *)corrected_image,m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint32_t));
+					}
 					else
-						delete[] reinterpret_cast<uint32_t*>(image_array[i]);
+						memcpy((uint32_t *)lima_img_ptr, (uint32_t *)image_array[0],m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint32_t));
 				}
+
+				DEB_TRACE() << "image cleaned" ;
+				HwFrameInfoType frame_info;
+				frame_info.acq_frame_nb = 0;
+				//- raise the image to Lima
+				buffer_mgr.newFrameReady(frame_info);
+				
+				DEB_TRACE() <<"Freeing every image pointer of the images array";
+				
+				if(m_imxpad_format == 0) //- aka 16 bits
+					delete[] reinterpret_cast<uint16_t*>(image_array[0]);
+				else //- aka 32 bits
+					delete[] reinterpret_cast<uint32_t*>(image_array[0]);
 
 				DEB_TRACE() << "Freeing images array";
-				if(m_pixel_depth == B2)
+				if(m_imxpad_format == 0) //- aka 16 bits
 					delete[] reinterpret_cast<uint16_t**>(image_array);
-				else//B4
+				else //- aka 32 bits
 					delete[] reinterpret_cast<uint32_t**>(image_array);
 
 				m_status = Camera::Ready;
@@ -761,15 +813,26 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                 DEB_TRACE() <<"Camera::->XPAD_DLL_GET_ASYNC_IMAGES_MSG";
                 
                 //- TODO: manage the corrected img 
-                void*   m_one_image;
-                int image_counter = 0;
-                int nb_last_aquired_image = 0;
+                void	*one_image;
+				float	*one_corrected_image;
 
-                if(m_imxpad_format == 0) //- aka 16 bits
-                    m_one_image = new uint16_t [ m_full_image_size_in_bytes / TWO_BYTES ];
+                int		image_counter = 0;
+                int		nb_last_aquired_image = 0;
+
+				if(m_imxpad_format == 0) //- aka 16 bits
+				{
+					if(m_doublepixel_corr) //- the image returned by xpix is not double pixel corrected !!
+						one_image = new uint16_t [ (m_image_size.getWidth()-18) * (m_image_size.getHeight()-3) ];
+					else
+						one_image = new uint16_t [ m_image_size.getWidth() * m_image_size.getHeight() ];
+				}
                 else //- aka 32 bits
-                    m_one_image = new uint32_t [ m_full_image_size_in_bytes / FOUR_BYTES ];
+                    one_image = new uint32_t [ m_image_size.getWidth() * m_image_size.getHeight() ];
 
+				//- the geometric corrected image is returned by the xpix lib
+				if(m_geom_corr) //- only for swing S540 xpad (578 * 1156) 
+					one_corrected_image = new float [ m_image_size.getWidth() * m_image_size.getHeight() ];
+				
                 //- workaround to a bug in xpci_getNumberLastAcquiredAsyncImage(): have to wait a little before calling it
                 yat::ThreadingUtilities::sleep(1+m_exp_time_usec / 1e6);  //- wait at least exp time in sec + 1 sec
 
@@ -777,9 +840,6 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 
                 while (image_counter < m_nb_frames)
                 {
-                    //- avoid spoofing the console
-                    //yat::ThreadingUtilities::sleep(1);  //- wait 1 sec
-
                     nb_last_aquired_image = xpci_getNumberLastAcquiredAsyncImage();
 
                     //- FL: hacked from imxpad ... don't know what is it
@@ -794,10 +854,10 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                         if ( xpci_getAsyncImage(    m_pixel_depth, 
                                                     m_modules_mask,
                                                     m_chip_number,
-                                                    m_nb_frames,//- to be clarified by imxpad
-                                                    (void*)m_one_image,
+                                                    m_nb_frames,
+                                                    (void*)one_image, //- base img
                                                     image_counter, //- image index to get
-                                                    NULL, //- corrected img
+                                                    (void*)one_corrected_image, //- corrected img
                                                     m_geom_corr //- flag for activating correction
                                                 ) == -1)           
 
@@ -805,10 +865,9 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                             DEB_ERROR() << "Error: xpci_getAsyncImage has returned an error..." ;
 
                             DEB_TRACE() << "Freeing the image";
-                            if(m_imxpad_format == 0) //- aka 16 bits
-                                delete[] reinterpret_cast<uint16_t**>(m_one_image);
-                            else //- aka 32 bits
-                                delete[] reinterpret_cast<uint32_t**>(m_one_image);
+                            delete[] one_image;
+							if(m_geom_corr)
+								delete[] one_corrected_image;
 
                             m_status = Camera::Fault;
                             throw LIMA_HW_EXC(Error, "xpci_getAsyncImage has returned an error ! ");
@@ -825,19 +884,46 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                         buffer_mgr.acqFrameNb2BufferNb(m_current_nb_frames, buffer_nb, concat_frame_nb);
 
                         void* lima_img_ptr;
-                        if(m_imxpad_format == 0) //- aka 16 bits
-                            lima_img_ptr = (uint16_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
-                        else //- aka 32 bits
-                            lima_img_ptr = (uint32_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
+						if(m_geom_corr) //- For S540 only
+						{
+							lima_img_ptr = (float*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
+                            memcpy((float*)lima_img_ptr, (float*)one_corrected_image, m_image_size.getWidth() * m_image_size.getHeight() * sizeof(float));
+						}
+						else
+						{
+							if(m_imxpad_format == 0) //- aka 16 bits
+								lima_img_ptr = (uint16_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
+							else //- aka 32 bits
+								lima_img_ptr = (uint32_t*)(buffer_mgr.getBufferPtr(buffer_nb,concat_frame_nb));
 
-                        //- copy image in the lima buffer
-                        if(m_imxpad_format == 0) //- aka 16 bits
-                            memcpy((uint16_t *)lima_img_ptr, (uint16_t *)m_one_image,m_full_image_size_in_bytes);
-                        else //- aka 32 bits
-                            memcpy((uint32_t *)lima_img_ptr, (uint32_t *)m_one_image,m_full_image_size_in_bytes);
+							//- copy image in the lima buffer
+							if(m_imxpad_format == 0) //- aka 16 bits
+							{
+								if(m_doublepixel_corr) //- For S140 only
+								{	
+									uint16_t corrected_image[578][243]; //- TODO: to be const inted
+									doublePixelCorrection<uint16_t>((uint16_t *)one_image,corrected_image);
+									memcpy((uint16_t *)lima_img_ptr, (uint16_t *)corrected_image,m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint16_t));
+								}
+								else //- no double pix correction
+									memcpy((uint16_t *)lima_img_ptr, (uint16_t *)one_image,m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint16_t));
+							}
+							else //- aka 32 bits
+							{
+								if(m_doublepixel_corr)
+								{
+									uint32_t corrected_image[578][243]; //- TODO: to be const inted
+									doublePixelCorrection<uint32_t>((uint32_t *)one_image,corrected_image);
+									memcpy((uint32_t *)lima_img_ptr, (uint32_t *)corrected_image,m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint32_t));
+								}
+								else
+									memcpy((uint32_t *)lima_img_ptr, (uint32_t *)one_image,m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint32_t));
+							}
+						}
 
                         HwFrameInfoType frame_info;
                         frame_info.acq_frame_nb = image_counter;
+						//frame_info.frame_dim = 
                         //- raise the image to Lima
                         buffer_mgr.newFrameReady(frame_info);
                         DEB_TRACE() << "image " << image_counter <<" published with newFrameReady()" ;
@@ -851,7 +937,10 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                 //- Finished
                 m_start_sec = Timestamp::now();
                 DEB_TRACE() << "Freeing last image pointer";
-                delete[] m_one_image;
+                delete[] one_image;
+				if(m_geom_corr)
+					delete[] one_corrected_image;
+
                 m_status = Camera::Ready;
                 m_end_sec = Timestamp::now() - m_start_sec;
                 DEB_TRACE() << "Time for freeing memory: now Ready! (sec) = " << m_end_sec;
@@ -859,55 +948,147 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
             }
             break;
 
-            //-----------------------------------------------------    
-            case XPAD_DLL_CALIBRATE:
+			//-----------------------------------------------------    
+			case XPAD_DLL_CALIBRATE_OTN_SLOW:
+				{
+					DEB_TRACE() <<"Camera::->XPAD_DLL_CALIBRATE_OTN_SLOW";
+
+					m_status = Camera::Calibrating;
+
+
+					if(imxpad_calibration_OTN_slow(m_modules_mask,(char*)m_calibration_path.c_str(),m_calibration_adjusting_number) == 0)
+					{
+						DEB_TRACE() << "imxpad_calibration_OTN_slow -> OK" ;
+					}
+					else
+					{
+						Event *my_event = new Event(Hardware, Event::Error, Event::Camera, Event::Default, "imxpad_calibration_OTN_slow() : error for path: " + m_calibration_path);
+						//DEB_EVENT(*my_event) << DEB_VAR1(*my_event);
+						reportEvent(my_event);
+
+						m_status = Camera::Fault;
+						//- TODO: get the xpix error 
+						throw LIMA_HW_EXC(Error, "Error in imxpad_calibration_OTN_slow!");
+					}
+					m_status = Camera::Ready;
+				}
+				break;
+			//-----------------------------------------------------    
+			case XPAD_DLL_CALIBRATE_OTN_MEDIUM:
+				{
+					DEB_TRACE() <<"Camera::->XPAD_DLL_CALIBRATE_OTN_MEDIUM";
+
+					m_status = Camera::Calibrating;
+
+
+					if(imxpad_calibration_OTN_medium(m_modules_mask,(char*)m_calibration_path.c_str(),m_calibration_adjusting_number) == 0)
+					{
+						DEB_TRACE() << "imxpad_calibration_OTN_medium -> OK" ;
+					}
+					else
+					{
+						Event *my_event = new Event(Hardware, Event::Error, Event::Camera, Event::Default, "imxpad_calibration_OTN_medium() : error for path: " + m_calibration_path);
+						//DEB_EVENT(*my_event) << DEB_VAR1(*my_event);
+						reportEvent(my_event);
+
+						m_status = Camera::Fault;
+						//- TODO: get the xpix error 
+						throw LIMA_HW_EXC(Error, "Error in imxpad_calibration_OTN_medium!");
+					}
+					m_status = Camera::Ready;
+				}
+				break;
+
+			//-----------------------------------------------------    
+			case XPAD_DLL_CALIBRATE_OTN_FAST:
+				{
+					DEB_TRACE() <<"Camera::->XPAD_DLL_CALIBRATE_OTN_FAST";
+
+					m_status = Camera::Calibrating;
+
+
+					if(imxpad_calibration_OTN_fast(m_modules_mask,(char*)m_calibration_path.c_str(),m_calibration_adjusting_number) == 0)
+					{
+						DEB_TRACE() << "imxpad_calibration_OTN_fast -> OK" ;
+					}
+					else
+					{
+						Event *my_event = new Event(Hardware, Event::Error, Event::Camera, Event::Default, "imxpad_calibration_OTN_fast() : error for path: " + m_calibration_path);
+						//DEB_EVENT(*my_event) << DEB_VAR1(*my_event);
+						reportEvent(my_event);
+
+						m_status = Camera::Fault;
+						//- TODO: get the xpix error 
+						throw LIMA_HW_EXC(Error, "Error in imxpad_calibration_OTN_fast!");
+					}
+					m_status = Camera::Ready;
+				}
+				break;
+
+			//-----------------------------------------------------    
+			case XPAD_DLL_CALIBRATE_BEAM:
+				{
+					DEB_TRACE() <<"Camera::->XPAD_DLL_CALIBRATE_BEAM";
+
+					m_status = Camera::Calibrating;
+
+					if(imxpad_calibration_BEAM(m_modules_mask,(char*)m_calibration_path.c_str(),m_calib_texp,m_calib_ithl_max,m_calib_itune,m_calib_imfp) == 0)
+					{
+						DEB_TRACE() << "imxpad_calibration_BEAM -> OK" ;
+					}
+					else
+					{
+						Event *my_event = new Event(Hardware, Event::Error, Event::Camera, Event::Default, "imxpad_calibration_BEAM() : error for path: " + m_calibration_path);
+						//DEB_EVENT(*my_event) << DEB_VAR1(*my_event);
+						reportEvent(my_event);
+
+						m_status = Camera::Fault;
+						//- TODO: get the xpix error 
+						throw LIMA_HW_EXC(Error, "Error in imxpad_calibration_BEAM!");
+					}
+					m_status = Camera::Ready;
+				}
+				break;
+			//-----------------------------------------------------    
+			case XPAD_DLL_CALIBRATE_OTN:
+				{
+					DEB_TRACE() <<"Camera::->XPAD_DLL_CALIBRATE_OTN";
+
+					m_status = Camera::Calibrating;
+
+					if(imxpad_calibration_OTN(m_modules_mask,(char*)m_calibration_path.c_str(),m_calibration_adjusting_number,m_calib_itune,m_calib_imfp) == 0)
+					{
+						DEB_TRACE() << "imxpad_calibration_OTN -> OK" ;
+					}
+					else
+					{
+
+						Event *my_event = new Event(Hardware, Event::Error, Event::Camera, Event::Default, "imxpad_calibration_OTN() : error for path: " + m_calibration_path);
+						//DEB_EVENT(*my_event) << DEB_VAR1(*my_event);
+						reportEvent(my_event);
+
+						m_status = Camera::Fault;
+						//- TODO: get the xpix error 
+						throw LIMA_HW_EXC(Error, "Error in imxpad_calibration_OTN!");
+					}
+					m_status = Camera::Ready;
+				}
+				break;
+
+            //-----------------------------------------------------	
+            case XPAD_DLL_UPLOAD_CALIBRATION:
                 {
-                    DEB_TRACE() <<"Camera::->XPAD_DLL_CALIBRATE";
+                    DEB_TRACE() <<"Camera::->XPAD_DLL_UPLOAD_CALIBRATION";    
 
-                    m_status = Camera::Calibrating;
-
-                    switch (m_calibration_type)
+                    if(imxpad_uploadCalibration(m_modules_mask,(char*)m_calibration_path.c_str()) == 0)
                     {
-                        //-----------------------------------------------------	
-                    case Camera::OTN_SLOW:
-                        {
-                            DEB_TRACE() <<"XPAD_DLL_CALIBRATE->OTN_SLOW";   
-
-                            if(imxpad_calibration_OTN_slow(m_modules_mask,(char*)m_calibration_path.c_str(),m_calibration_adjusting_number) == 0)
-                            {
-                                DEB_TRACE() << "calibrateOTNSlow -> imxpad_calibration_OTN_slow -> OK" ;
-                            }
-                            else
-                            {
-
-	                            Event *my_event = new Event(Hardware, Event::Error, Event::Camera, Event::Default, "the calibration path already exist");
-	                            //DEB_EVENT(*my_event) << DEB_VAR1(*my_event);
-	                            reportEvent(my_event);
-
-                                m_status = Camera::Fault;
-                                //- TODO: get the xpix error 
-                                throw LIMA_HW_EXC(Error, "Error in imxpad_calibration_OTN_slow!");
-                            }
-                        }
-                        break;
-
-                         //-----------------------------------------------------	
-                    case Camera::UPLOAD:
-                        {
-                            DEB_TRACE() <<"XPAD_DLL_CALIBRATE->UPLOAD";    
-
-                            if(imxpad_uploadCalibration(m_modules_mask,(char*)m_calibration_path.c_str()) == 0)
-                            {
-                                DEB_TRACE() << "uploadCalibration -> imxpad_uploadCalibration -> OK" ;
-                            }
-                            else
-                            {
-                                m_status = Camera::Fault;
-                                //- TODO: get the xpix error 
-                                throw LIMA_HW_EXC(Error, "Error in imxpad_uploadCalibration!");
-                            }
-                        }
-                        break;
+                        DEB_TRACE() << "imxpad_uploadCalibration -> OK" ;
+                    }
+                    else
+                    {
+                        m_status = Camera::Fault;
+                        //- TODO: get the xpix error 
+                        throw LIMA_HW_EXC(Error, "Error in imxpad_uploadCalibration!");
                     }
                     m_status = Camera::Ready;
                 }
@@ -929,7 +1110,6 @@ void Camera::setExposureParameters( unsigned Texp,unsigned Twait,unsigned Tinit,
 			                         unsigned nbImages,unsigned BusyOutSel,unsigned formatIMG,unsigned postProc,
 			                         unsigned GP1,unsigned GP2,unsigned GP3,unsigned GP4)
 {
-
 	DEB_MEMBER_FUNCT();
 
     if (xpci_modExposureParam(m_modules_mask, Texp, Twait, Tinit,
@@ -951,7 +1131,25 @@ void Camera::setExposureParameters( unsigned Texp,unsigned Twait,unsigned Tinit,
 void Camera::setAcquisitionType(short acq_type)
 {
 	DEB_MEMBER_FUNCT();
+
     m_acquisition_type = (Camera::XpadAcqType)acq_type;
+
+	//- in SYNC mode: Geom corrections for S540 are not supported
+	if(m_acquisition_type == Camera::SYNC)
+	{
+		m_geom_corr = 0;
+
+		if (m_maximage_size_cb_active) 
+		{
+			// only if the callaback is active
+			// inform lima about the size change
+			ImageType pixel_depth;
+			Size image_size;
+			getPixelDepth(pixel_depth); //- ie Bpp16 ...
+			getImageSize(image_size); //- size of image
+			maxImageSizeChanged(image_size, pixel_depth);       
+		}
+	}
 
 	DEB_TRACE() << "m_acquisition_type = " << m_acquisition_type  ;
 }
@@ -1171,9 +1369,62 @@ void Camera::calibrateOTNSlow ( string path)
     DEB_MEMBER_FUNCT();
 
     m_calibration_path = path;
-    m_calibration_type = Camera::OTN_SLOW;
 
-    this->post(new yat::Message(XPAD_DLL_CALIBRATE), kPOST_MSG_TMO);
+    this->post(new yat::Message(XPAD_DLL_CALIBRATE_OTN_SLOW), kPOST_MSG_TMO);
+}
+
+//-----------------------------------------------------
+//		calibrate over the noise Medium
+//-----------------------------------------------------
+void Camera::calibrateOTNMedium ( string path)
+{
+    DEB_MEMBER_FUNCT();
+
+    m_calibration_path = path;
+
+    this->post(new yat::Message(XPAD_DLL_CALIBRATE_OTN_MEDIUM), kPOST_MSG_TMO);
+}
+
+//-----------------------------------------------------
+//		calibrate over the noise Fast
+//-----------------------------------------------------
+void Camera::calibrateOTNFast ( string path)
+{
+    DEB_MEMBER_FUNCT();
+
+    m_calibration_path = path;
+
+    this->post(new yat::Message(XPAD_DLL_CALIBRATE_OTN_FAST), kPOST_MSG_TMO);
+}
+
+//-----------------------------------------------------
+//		calibrate over the noise Beam
+//-----------------------------------------------------
+void Camera::calibrateBeam ( string path, unsigned int texp, unsigned int ithl_max, unsigned int itune,unsigned int imfp)
+{
+    DEB_MEMBER_FUNCT();
+
+    m_calibration_path	= path;
+	m_calib_texp		= texp;
+	m_calib_ithl_max	= ithl_max;
+	m_calib_itune		= itune;
+	m_calib_imfp		= imfp;
+
+    this->post(new yat::Message(XPAD_DLL_CALIBRATE_BEAM), kPOST_MSG_TMO);
+}
+
+//-----------------------------------------------------
+//		calibrate over the noise
+//-----------------------------------------------------
+void Camera::calibrateOTN ( string path, unsigned int itune,unsigned int imfp)
+{
+    DEB_MEMBER_FUNCT();
+
+    m_calibration_path	= path;
+	m_calib_itune		= itune;
+	m_calib_imfp		= imfp;
+
+    this->post(new yat::Message(XPAD_DLL_CALIBRATE_OTN), kPOST_MSG_TMO);
 }
 
 //-----------------------------------------------------
@@ -1184,9 +1435,8 @@ void Camera::uploadCalibration(string path)
     DEB_MEMBER_FUNCT();
 
     m_calibration_path = path;
-    m_calibration_type = Camera::UPLOAD;
 
-    this->post(new yat::Message(XPAD_DLL_CALIBRATE), kPOST_MSG_TMO);
+    this->post(new yat::Message(XPAD_DLL_UPLOAD_CALIBRATION), kPOST_MSG_TMO);
 }
 
 //-----------------------------------------------------
@@ -1247,56 +1497,55 @@ void Camera::decrementITHL()
 }
 
 //-----------------------------------------------------
-//		decrement the ITHL
+//		set Calibration Adjusting Number
 //-----------------------------------------------------
 void Camera::setCalibrationAdjustingNumber(unsigned calibration_adjusting_number)
 {
     DEB_MEMBER_FUNCT();
 
     m_calibration_adjusting_number = calibration_adjusting_number;
-
 }
 
 //-----------------------------------------------------
 //		Set the deadtime
 //-----------------------------------------------------
-void Camera::setDeadTime(unsigned int dead_time)
+void Camera::setDeadTime(unsigned int dead_time_ms)
 {
 	DEB_MEMBER_FUNCT();
 
 	//- Parameters checking
 	if (m_pixel_depth == B2) //- 16 bits
 	{
-		if (dead_time < 2000)
+		if (dead_time_ms * 1000 < 2000)
 			throw LIMA_HW_EXC(Error, "deadtime should be at least 2000 usec in 16 bits");
 	}
 	else //- 32 bits
 	{
-		if (dead_time < 5000)
+		if (dead_time_ms * 1000 < 5000)
 			throw LIMA_HW_EXC(Error, "deadtime should be at least 5000 usec in 32 bits");
 	}
 
-	m_time_between_images_usec  = dead_time; //- Temps entre chaque image
+	m_time_between_images_usec  = dead_time_ms * 1000; //- Temps entre chaque image
 }
 
 //-----------------------------------------------------
 //		Set the init time
 //-----------------------------------------------------
-void Camera::setInitTime(unsigned int init_time)
+void Camera::setInitTime(unsigned int init_time_ms)
 {
 	DEB_MEMBER_FUNCT();
 
-	m_time_before_start_usec  = init_time; //- Temps initial
+	m_time_before_start_usec  = init_time_ms * 1000; //- Temps initial
 }
 
 //-----------------------------------------------------
 //		Set the shutter time
 //-----------------------------------------------------
-void Camera::setShutterTime(unsigned int shutter_time)
+void Camera::setShutterTime(unsigned int shutter_time_ms)
 {
 	DEB_MEMBER_FUNCT();
 
-	m_shutter_time_usec  = shutter_time;
+	m_shutter_time_usec  = shutter_time_ms * 1000;
 }
 
 //-----------------------------------------------------
@@ -1349,7 +1598,55 @@ void Camera::setGeomCorrection(bool geom_corr)
 {
 	DEB_MEMBER_FUNCT();
 
+	if((m_xpad_model != IMXPAD_S540) || (m_acquisition_type != Camera::ASYNC))
+		throw LIMA_HW_EXC(Error, "Geometrical correction is only available for S540 Xpad in Asynchrone mode");
+
 	m_geom_corr  = (unsigned int)geom_corr;
+
+	if (m_maximage_size_cb_active) 
+	{
+		// only if the callaback is active
+		// inform lima about the size change
+		ImageType pixel_depth;
+		Size image_size;
+		getPixelDepth(pixel_depth); //- ie Bpp16 ...
+		getImageSize(image_size); //- size of image
+		maxImageSizeChanged(image_size, pixel_depth);       
+	}
+}
+
+//-----------------------------------------------------
+//		enable/disable double pixel correction
+//-----------------------------------------------------
+void Camera::setDoublePixelCorrection(bool doublepixel_corr)
+{
+	DEB_MEMBER_FUNCT();
+
+	if(m_xpad_model != IMXPAD_S140)
+		throw LIMA_HW_EXC(Error, "Double pixel correction is only available for S140 Xpad");
+
+	m_doublepixel_corr  = doublepixel_corr;
+
+	if (m_maximage_size_cb_active) 
+	{
+		// only if the callaback is active
+		// inform lima about the size change
+		ImageType pixel_depth;
+		Size image_size;
+		getPixelDepth(pixel_depth); //- ie Bpp16 ...
+		getImageSize(image_size); //- size of image
+		maxImageSizeChanged(image_size, pixel_depth);       
+	}
+}
+
+//-----------------------------------------------------
+//		Set GeneralPurpose Params
+//-----------------------------------------------------
+void Camera::setNormalizationFactor(double norm_factor)
+{
+	DEB_MEMBER_FUNCT();
+
+	m_norm_factor = norm_factor;
 }
 
 //-----------------------------------------------------
@@ -1373,6 +1670,83 @@ void Camera::xpixDebug(bool enable)
     DEB_MEMBER_FUNCT();
 
     xpci_debugMsg(enable);
-
 }
 
+//-----------------------------------------------------
+//		setMaxImageSizeCallbackActive
+//-----------------------------------------------------
+void Camera::setMaxImageSizeCallbackActive(bool cb_active)
+{
+    DEB_MEMBER_FUNCT();
+
+    m_maximage_size_cb_active = cb_active;
+	DEB_TRACE() << "m_maximage_size_cb_active = " << m_maximage_size_cb_active ;
+}
+
+//---------------------------------------------------------------------------
+//		Double Pixel Correction for S140 Xpad (cf J Perez and C Mocuta)
+//---------------------------------------------------------------------------
+template<typename T> 
+void Camera::doublePixelCorrection(T* image_to_correct, T corrected_image[][243])
+{
+    DEB_MEMBER_FUNCT();
+
+	DEB_TRACE() << "m_image_size.getWidth() = " << m_image_size.getWidth() ;
+	DEB_TRACE() << "m_image_size.getHeight() = " << m_image_size.getHeight() ;
+
+	//- double Pixel Correction algo (from J. Perez)
+	//- copy one_image into I1 (for easy access)
+	m_start_sec = Timestamp::now();
+	int cpt=0;
+	T I1[560][240];
+	for (int j=0;j<240;j++)
+		for(int i =0 ;i<560 ;i++)
+			I1[i][j]= ((T*)image_to_correct)[cpt++]; 
+	DEB_TRACE() << "Time for copying one_image into I1 = " << Timestamp::now() - m_start_sec; //- measured = 250 ns
+
+	m_start_sec = Timestamp::now();
+	T I2[578][240];
+	//- On remplit I2
+	for(int j = 0; j<=239; j++)
+	{
+		I2[0][j] = I1[0][j]; //- copy 1ere colonne de I1 dans I2
+		for (int chip = 1; chip<=6; chip++) // pour tous les chips sauf le dernier
+		{   
+			for (int i = (chip-1)*83+1; i <= chip*83-5;i++) // 
+				I2[i][j] = I1[i - 3*(chip-1)][j];
+
+			int I1left	=I1[(chip*80-1)][j];
+			int I1right	=I1[chip*80][j];
+			int i;
+			for (i = chip*83-4; i <= chip*83-3; i++) // 
+				I2[i][j] = round(I1left / m_norm_factor) ;
+
+			I2[chip*83-2][j] = I1left + I1right - 2*(round(I1left / m_norm_factor) + round(I1right / m_norm_factor));
+
+			for (i = chip*83-1; i <= chip*83; i++) // 
+				I2[i][j] = round(I1right / m_norm_factor);
+		}
+		for (int i = 499; i <= 577; i++) // 
+			I2[i][j] = I1[i-18][j];
+	}
+	//- On remplit corrected_image
+	for (int i = 0; i <= 577; i++) //
+	{
+		for(int j = 0; j<=118; j++)
+			corrected_image[i][j] = I2[i][j];
+
+		int I2up	=I2[i][119];
+		int I2down	=I2[i][120];
+		int j;
+		for(j = 119; j<=120; j++)
+			corrected_image[i][j] = round(I2up / m_norm_factor);
+
+		corrected_image[i][121] = I2up + I2down - 2*(round(I2up / m_norm_factor)+round(I2down / m_norm_factor));
+
+		for(j = 122; j<=123;j++)
+			corrected_image[i][j] = round(I2down / m_norm_factor);
+		for(j = 124; j<=242;j++)
+			corrected_image[i][j] = I2[i-3][j];
+	}
+	DEB_TRACE() << "Time for the double pixel algo = " << Timestamp::now() - m_start_sec;//- measured = 650 ns
+}

@@ -32,16 +32,23 @@
 const size_t  XPAD_DLL_START_SYNC_MSG		=	(yat::FIRST_USER_MSG + 100);
 const size_t  XPAD_DLL_START_ASYNC_MSG		=	(yat::FIRST_USER_MSG + 101);
 const size_t  XPAD_DLL_START_LIVE_ACQ_MSG	=	(yat::FIRST_USER_MSG + 102);
-const size_t  XPAD_DLL_CALIBRATE		    =	(yat::FIRST_USER_MSG + 103);
-const size_t  XPAD_DLL_GET_ASYNC_IMAGES_MSG	=	(yat::FIRST_USER_MSG + 105);
+const size_t  XPAD_DLL_GET_ASYNC_IMAGES_MSG	=	(yat::FIRST_USER_MSG + 103);
+const size_t  XPAD_DLL_CALIBRATE_OTN_SLOW   =	(yat::FIRST_USER_MSG + 104);
+const size_t  XPAD_DLL_CALIBRATE_OTN_MEDIUM =	(yat::FIRST_USER_MSG + 105);
+const size_t  XPAD_DLL_CALIBRATE_OTN_FAST   =	(yat::FIRST_USER_MSG + 106);
+const size_t  XPAD_DLL_CALIBRATE_BEAM       =	(yat::FIRST_USER_MSG + 107);
+const size_t  XPAD_DLL_CALIBRATE_OTN        =	(yat::FIRST_USER_MSG + 108);
+const size_t  XPAD_DLL_UPLOAD_CALIBRATION   =	(yat::FIRST_USER_MSG + 109);
 
-//- Xpix
+
+//- Xpix Xpad
 #include <xpci_interface.h>
 #include <xpci_interface_expert.h>
 #include <xpci_time.h>
 #include <xpci_calib_imxpad.h>
 #include <xpci_imxpad.h>
 
+//- std
 #include <stdlib.h>
 #include <limits>
 
@@ -62,10 +69,6 @@ const int FIRST_TIMEOUT = 8000;
 const int CHIP_NB_ROW       = 120;
 const int CHIP_NB_COLUMN    = 80;
 
-const int TWO_BYTES         = 2;
-const int FOUR_BYTES        = 4;
-
-
 namespace lima
 {
 namespace Xpad
@@ -75,7 +78,7 @@ namespace Xpad
 	* \class Camera
 	* \brief object controlling the xpad detector via xpix driver
 	*******************************************************************/
-	class Camera : public yat::Task,public EventCallbackGen
+	class Camera : public yat::Task , public EventCallbackGen, public HwMaxImageSizeCallbackGen
 	{
 		DEB_CLASS_NAMESPC(DebModCamera, "Camera", "Xpad");
 
@@ -92,14 +95,6 @@ namespace Xpad
         enum XpadAcqType {
 	                SYNC = 0,
 	                ASYNC
-		};
-
-        enum CalibrationType {
-	                OTN_SLOW = 0,
-	                OTN_MEDIUM,
-			        OTN_HIGH,
-			        BEAM,
-			        UPLOAD
 		};
 
         //- CTOR/DTOR
@@ -167,8 +162,13 @@ namespace Xpad
         void calibrateOTNSlow (string path);
         //! Calibrate over the noise Medium and save dacl and configg files in path
         void calibrateOTNMedium (string path);
-        //! Calibrate over the noise High and save dacl and configg files in path
-        void calibrateOTNHigh (string path);
+        //! Calibrate over the noise Fast and save dacl and configg files in path
+        void calibrateOTNFast (string path);
+		//! Calibrate BEAM and save dacl and configg files in path
+		void calibrateBeam ( string path, unsigned int texp, unsigned int ithl_max, unsigned int itune,unsigned int imfp);
+		//! Calibrate over the noise and save dacl and configg files in path
+		void calibrateOTN ( string path, unsigned int itune,unsigned int imfp);
+
         //! upload the calibration (dacl + config) that is stored in path
         void uploadCalibration(string path);
         //! upload the wait times between each images in case of a sequence of images (Twait from setExposureParameters should be 0)
@@ -181,11 +181,11 @@ namespace Xpad
         void setCalibrationAdjustingNumber(unsigned calibration_adjusting_number);
 
 		//! Set the deadtime
-		void setDeadTime(unsigned int dead_time);
+		void setDeadTime(unsigned int dead_time_ms);
 		//! Set the init time
-		void setInitTime(unsigned int init_time);
+		void setInitTime(unsigned int init_time_ms);
 		//! Set the shutter time
-		void setShutterTime(unsigned int shutter_time);
+		void setShutterTime(unsigned int shutter_time_ms);
 		//! Set the overflow time
 		void setOverflowTime(unsigned int overflow_time);
 		//! Set the n param
@@ -196,21 +196,29 @@ namespace Xpad
 		void setBusyOutSel(unsigned int busy_out_sel);
 		//! enable/disable geom correction
 		void setGeomCorrection(bool geom_corr);
+		//! enable/disable double pixel correction
+		void setDoublePixelCorrection(bool doublepixel_corr);
+		//! Set Normalization Factor (used in double pixel correction)
+		void setNormalizationFactor(double norm_factor);
 		//! Set GeneralPurpose Params
 		void setGeneralPurposeParams( unsigned int GP1, unsigned intGP2, unsigned int GP3, unsigned int GP4);
 
 		//! Xpix debug
         void xpixDebug(bool enable);
 
-
-		//- yat::Task implementation
 	protected: 
+		//- yat::Task implementation
 		virtual void handle_message( yat::Message& msg )throw (yat::Exception);
+		virtual void setMaxImageSizeCallbackActive(bool cb_active);
+		
+
 	private:
 		//- lima stuff
 		SoftBufferAllocMgr 	m_buffer_alloc_mgr;
 		StdBufferCbMgr 		m_buffer_cb_mgr;
 		BufferCtrlMgr 		m_buffer_ctrl_mgr;
+		bool				m_maximage_size_cb_active;
+        Camera::Status		m_status;
 
 		//- img stuff
 		int 			m_nb_frames;		
@@ -228,19 +236,21 @@ namespace Xpad
 		//---------------------------------
 		//- xpad stuff 
         Camera::XpadAcqType		m_acquisition_type;
-        Camera::CalibrationType m_calibration_type;
         unsigned int	        m_modules_mask;
         int				        m_module_number;
         unsigned int	        m_chip_number;
-        int				        m_full_image_size_in_bytes;
         vector<long>	        m_all_config_g;
         unsigned short 			m_xpad_model;
         string                  m_calibration_path;
         unsigned int            m_calibration_adjusting_number;
         void**                  m_image_array;
-
+		bool					m_doublepixel_corr;
+		unsigned int			m_calib_texp;
+		unsigned int			m_calib_ithl_max;
+		unsigned int			m_calib_itune;
+		unsigned int			m_calib_imfp;
+		double					m_norm_factor;
         //unsigned short*         m_dacl;
-        //- Specific xpad stuff
         unsigned int m_time_between_images_usec; //- Temps entre chaque image
         unsigned int m_time_before_start_usec;     //- Temps initial
         unsigned int m_shutter_time_usec;
@@ -254,8 +264,10 @@ namespace Xpad
 	    unsigned int m_specific_param_GP3;
 	    unsigned int m_specific_param_GP4;
 
-        //---------------------------------
-        Camera::Status	m_status;
+		//- Internal algos
+		template<typename T> 
+		void doublePixelCorrection(T* image_to_correct,  T corrected_image[][243]);
+
 	};
 
 } // namespace xpad
