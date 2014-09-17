@@ -120,30 +120,6 @@ m_maximage_size_cb_active(false)
 	    }
 
 	    // ATTENTION: Modules should be ordered! 
-		/*if(correction == true)
-		{
-			if(m_xpad_model == IMXPAD_S140)
-			{
-				m_doublepixel_corr = true;
-				m_image_size = Size(578 ,243);
-			}
-			else if(m_xpad_model == IMXPAD_S540)
-			{
-				m_doublepixel_corr = true;
-				m_image_size = Size(578 * 1156);
-			}
-			else
-			{
-				m_doublepixel_corr = true;
-				m_image_size = Size(578 ,243);
-			}
-		}
-		else
-		{
-			m_image_size = Size(CHIP_NB_COLUMN * m_chip_number ,CHIP_NB_ROW * m_module_number);
-		}*/
-	    //- Test FL
-		//m_image_size = Size(578 ,243);
 		m_image_size = Size(CHIP_NB_COLUMN * m_chip_number ,CHIP_NB_ROW * m_module_number);
         
 	    DEB_TRACE() << "--> Number of chips 		 = " << std::dec << m_chip_number ;
@@ -260,9 +236,9 @@ void Camera::getImageSize(Size& size)
 	DEB_MEMBER_FUNCT();
 
 	if (m_doublepixel_corr)
-		m_image_size = Size(578,243); //- For S140 only
+		m_image_size = Size(S140_CORRECTED_NB_COLUMN,S140_CORRECTED_NB_ROW);//- For S140 only
 	else if (m_geom_corr)
-		m_image_size = Size(578,1156); //- For S540 only
+		m_image_size = Size(S540_CORRECTED_NB_COLUMN,S540_CORRECTED_NB_ROW); //- For S540 only
 	else
 		m_image_size = Size(CHIP_NB_COLUMN * m_chip_number ,CHIP_NB_ROW * m_module_number);
 
@@ -601,7 +577,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 					{
 						if(m_doublepixel_corr) //- For S140 only
 						{	
-							uint16_t corrected_image[578][243];//- TODO: to be const inted
+							uint16_t corrected_image[S140_CORRECTED_NB_ROW][S140_CORRECTED_NB_COLUMN];
 							doublePixelCorrection<uint16_t>((uint16_t *)image_array[i],corrected_image);
 							memcpy((uint16_t *)lima_img_ptr, (uint16_t *)corrected_image,m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint16_t));
 						}
@@ -612,7 +588,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 					{
 						if(m_doublepixel_corr)
 						{
-							uint32_t corrected_image[578][243];//- TODO: to be const inted
+							uint32_t corrected_image[S140_CORRECTED_NB_ROW][S140_CORRECTED_NB_COLUMN];
 							doublePixelCorrection<uint32_t>((uint32_t *)image_array[i],corrected_image);
 							memcpy((uint32_t *)lima_img_ptr, (uint32_t *)corrected_image,m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint32_t));
 						}
@@ -730,7 +706,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				{
 					if(m_doublepixel_corr) //- For S140 only
 					{	
-						uint16_t corrected_image[578][243];//- TODO: to be const inted
+						uint16_t corrected_image[S140_CORRECTED_NB_ROW][S140_CORRECTED_NB_COLUMN];
 						doublePixelCorrection<uint16_t>((uint16_t *)image_array[0],corrected_image);
 						memcpy((uint16_t *)lima_img_ptr, (uint16_t *)corrected_image,m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint16_t));
 					}
@@ -741,7 +717,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				{
 					if(m_doublepixel_corr)
 					{
-						uint32_t corrected_image[578][243];//- TODO: to be const inted
+						uint32_t corrected_image[S140_CORRECTED_NB_ROW][S140_CORRECTED_NB_COLUMN];
 						doublePixelCorrection<uint32_t>((uint32_t *)image_array[0],corrected_image);
 						memcpy((uint32_t *)lima_img_ptr, (uint32_t *)corrected_image,m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint32_t));
 					}
@@ -901,7 +877,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 							{
 								if(m_doublepixel_corr) //- For S140 only
 								{	
-									uint16_t corrected_image[578][243]; //- TODO: to be const inted
+									uint16_t corrected_image[S140_CORRECTED_NB_ROW][S140_CORRECTED_NB_COLUMN]; 
 									doublePixelCorrection<uint16_t>((uint16_t *)one_image,corrected_image);
 									memcpy((uint16_t *)lima_img_ptr, (uint16_t *)corrected_image,m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint16_t));
 								}
@@ -912,7 +888,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 							{
 								if(m_doublepixel_corr)
 								{
-									uint32_t corrected_image[578][243]; //- TODO: to be const inted
+									uint32_t corrected_image[S140_CORRECTED_NB_ROW][S140_CORRECTED_NB_COLUMN]; 
 									doublePixelCorrection<uint32_t>((uint32_t *)one_image,corrected_image);
 									memcpy((uint32_t *)lima_img_ptr, (uint32_t *)corrected_image,m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint32_t));
 								}
@@ -923,8 +899,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 
                         HwFrameInfoType frame_info;
                         frame_info.acq_frame_nb = image_counter;
-						//frame_info.frame_dim = 
-                        //- raise the image to Lima
+						//- raise the image to Lima
                         buffer_mgr.newFrameReady(frame_info);
                         DEB_TRACE() << "image " << image_counter <<" published with newFrameReady()" ;
                         image_counter++;
@@ -1687,7 +1662,7 @@ void Camera::setMaxImageSizeCallbackActive(bool cb_active)
 //		Double Pixel Correction for S140 Xpad (cf J Perez and C Mocuta)
 //---------------------------------------------------------------------------
 template<typename T> 
-void Camera::doublePixelCorrection(T* image_to_correct, T corrected_image[][243])
+void Camera::doublePixelCorrection(T* image_to_correct, T corrected_image[][S140_CORRECTED_NB_COLUMN])
 {
     DEB_MEMBER_FUNCT();
 
@@ -1698,55 +1673,71 @@ void Camera::doublePixelCorrection(T* image_to_correct, T corrected_image[][243]
 	//- copy one_image into I1 (for easy access)
 	m_start_sec = Timestamp::now();
 	int cpt=0;
-	T I1[560][240];
-	for (int j=0;j<240;j++)
-		for(int i =0 ;i<560 ;i++)
-			I1[i][j]= ((T*)image_to_correct)[cpt++]; 
+	T I1[I1_ROW][I1_COLUMN];
+	for (int j=0;j<I1_ROW;j++)
+		for(int i =0 ;i<I1_COLUMN ;i++)
+			I1[j][i]= ((T*)image_to_correct)[cpt++]; 
 	DEB_TRACE() << "Time for copying one_image into I1 = " << Timestamp::now() - m_start_sec; //- measured = 250 ns
 
+	DEB_TRACE() << "I1[12][31] = " << I1[12][31]; 
+	DEB_TRACE() << "I1[12][29] = " << I1[12][31]; 
+	
 	m_start_sec = Timestamp::now();
-	T I2[578][240];
+	T I2[I2_ROW][I2_COLUMN];
 	//- On remplit I2
-	for(int j = 0; j<=239; j++)
+	for(int j = 0; j<I2_ROW; j++)
 	{
-		I2[0][j] = I1[0][j]; //- copy 1ere colonne de I1 dans I2
+		I2[j][0] = I1[j][0]; //- copy 1ere colonne de I1 dans I2
+		//- DEBUG:
+		if (j < 10)
+		{
+			DEB_TRACE() << "I1[j][0] = " << I1[j][0]; 
+			DEB_TRACE() << "I1[j][1] = " << I1[j][1]; 
+		}
 		for (int chip = 1; chip<=6; chip++) // pour tous les chips sauf le dernier
 		{   
 			for (int i = (chip-1)*83+1; i <= chip*83-5;i++) // 
-				I2[i][j] = I1[i - 3*(chip-1)][j];
+				I2[j][i] = I1[j][i - 3*(chip-1)];
 
-			int I1left	=I1[(chip*80-1)][j];
-			int I1right	=I1[chip*80][j];
+			int I1left	=I1[j][(chip*80-1)];
+			int I1right	=I1[j][chip*80];
 			int i;
 			for (i = chip*83-4; i <= chip*83-3; i++) // 
-				I2[i][j] = round(I1left / m_norm_factor) ;
+				I2[j][i] = round(I1left / m_norm_factor) ;
 
-			I2[chip*83-2][j] = I1left + I1right - 2*(round(I1left / m_norm_factor) + round(I1right / m_norm_factor));
+			I2[j][chip*83-2] = I1left + I1right - 2*(round(I1left / m_norm_factor) + round(I1right / m_norm_factor));
 
 			for (i = chip*83-1; i <= chip*83; i++) // 
-				I2[i][j] = round(I1right / m_norm_factor);
+				I2[j][i] = round(I1right / m_norm_factor);
 		}
 		for (int i = 499; i <= 577; i++) // 
-			I2[i][j] = I1[i-18][j];
+			I2[j][i] = I1[j][i-18];		
+
+		if (j < 10)
+		{
+			DEB_TRACE() << "I2[j][0] = " << I2[j][0]; 
+			DEB_TRACE() << "I2[j][1] = " << I2[j][1]; 
+		}
 	}
+	
 	//- On remplit corrected_image
-	for (int i = 0; i <= 577; i++) //
+	for (int i = 0; i < S140_CORRECTED_NB_COLUMN; i++) //
 	{
-		for(int j = 0; j<=118; j++)
-			corrected_image[i][j] = I2[i][j];
+		for(int j = 0; j <=118; j++)
+			corrected_image[j][i] = I2[j][i];
 
-		int I2up	=I2[i][119];
-		int I2down	=I2[i][120];
+		int I2up	=I2[119][i];
+		int I2down	=I2[120][i];
 		int j;
-		for(j = 119; j<=120; j++)
-			corrected_image[i][j] = round(I2up / m_norm_factor);
+		for(j = 119; j <= 120; j++)
+			corrected_image[j][i] = round(I2up / m_norm_factor);
 
-		corrected_image[i][121] = I2up + I2down - 2*(round(I2up / m_norm_factor)+round(I2down / m_norm_factor));
+		corrected_image[121][i] = I2up + I2down - 2*(round(I2up / m_norm_factor)+round(I2down / m_norm_factor));
 
 		for(j = 122; j<=123;j++)
-			corrected_image[i][j] = round(I2down / m_norm_factor);
+			corrected_image[j][i] = round(I2down / m_norm_factor);
 		for(j = 124; j<=242;j++)
-			corrected_image[i][j] = I2[i-3][j];
+			corrected_image[j][i] = I2[j][i-3];
 	}
 	DEB_TRACE() << "Time for the double pixel algo = " << Timestamp::now() - m_start_sec;//- measured = 650 ns
 }

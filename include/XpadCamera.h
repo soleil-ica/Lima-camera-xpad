@@ -69,6 +69,20 @@ const int FIRST_TIMEOUT = 8000;
 const int CHIP_NB_ROW       = 120;
 const int CHIP_NB_COLUMN    = 80;
 
+//- image sizes used for corrections 
+const int I1_ROW    = 240;
+const int I1_COLUMN = 560;
+
+const int I2_ROW    = 240;
+const int I2_COLUMN = 578;
+
+const int S140_CORRECTED_NB_ROW		= 243;
+const int S140_CORRECTED_NB_COLUMN  = 578;
+
+const int S540_CORRECTED_NB_ROW		= 1156;
+const int S540_CORRECTED_NB_COLUMN  = 578;
+
+
 namespace lima
 {
 namespace Xpad
@@ -266,7 +280,7 @@ namespace Xpad
 
 		//- Internal algos
 		template<typename T> 
-		void doublePixelCorrection(T* image_to_correct,  T corrected_image[][243]);
+		void doublePixelCorrection(T* image_to_correct,  T corrected_image[][S140_CORRECTED_NB_COLUMN]);
 
 	};
 
