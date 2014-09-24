@@ -786,9 +786,11 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
             //-----------------------------------------------------    
         case XPAD_DLL_GET_ASYNC_IMAGES_MSG:
             {
+				DEB_TRACE() << "=========================================";
                 DEB_TRACE() <<"Camera::->XPAD_DLL_GET_ASYNC_IMAGES_MSG";
+
+				m_status = Camera::Exposure;
                 
-                //- TODO: manage the corrected img 
                 void	*one_image;
 				float	*one_corrected_image;
 
@@ -1055,6 +1057,8 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                 {
                     DEB_TRACE() <<"Camera::->XPAD_DLL_UPLOAD_CALIBRATION";    
 
+					m_status = Camera::Calibrating;
+
                     if(imxpad_uploadCalibration(m_modules_mask,(char*)m_calibration_path.c_str()) == 0)
                     {
                         DEB_TRACE() << "imxpad_uploadCalibration -> OK" ;
@@ -1162,17 +1166,17 @@ void Camera::loadAllConfigG(unsigned long modNum, unsigned long chipId , unsigne
     SET(mask_local_chip,(chipId-1));// minus 1 because chipId start at 1
 
 	if(xpci_modLoadAllConfigG(mask_local_module,mask_local_chip, 
-			                                    config_values[0],//- CMOS_TP
-			                                    config_values[1],//- AMP_TP, 
-			                                    config_values[2],//- ITHH, 
-			                                    config_values[3],//- VADJ, 
-			                                    config_values[4],//- VREF, 
-			                                    config_values[5],//- IMFP, 
-			                                    config_values[6],//- IOTA, 
-			                                    config_values[7],//- IPRE, 
-			                                    config_values[8],//- ITHL, 
-			                                    config_values[9],//- ITUNE, 
-			                                    config_values[10]//- IBUFFER
+                                    config_values[0],//- CMOS_TP
+                                    config_values[1],//- AMP_TP, 
+                                    config_values[2],//- ITHH, 
+                                    config_values[3],//- VADJ, 
+                                    config_values[4],//- VREF, 
+                                    config_values[5],//- IMFP, 
+                                    config_values[6],//- IOTA, 
+                                    config_values[7],//- IPRE, 
+                                    config_values[8],//- ITHL, 
+                                    config_values[9],//- ITUNE, 
+                                    config_values[10]//- IBUFFER
 		                        ) == 0)
 	{
 		DEB_TRACE() << "loadAllConfigG for module " << modNum  << ", and chip " << chipId << " -> OK" ;
@@ -1737,7 +1741,7 @@ void Camera::doublePixelCorrection(T* image_to_correct, T corrected_image[][S140
 		for(j = 122; j<=123;j++)
 			corrected_image[j][i] = round(I2down / m_norm_factor);
 		for(j = 124; j<=242;j++)
-			corrected_image[j][i] = I2[j][i-3];
+			corrected_image[j][i] = I2[j-3][i];
 	}
 	DEB_TRACE() << "Time for the double pixel algo = " << Timestamp::now() - m_start_sec;//- measured = 650 ns
 }
