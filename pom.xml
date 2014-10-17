@@ -31,7 +31,7 @@
 		<dependency>
 			<groupId>fr.in2p3</groupId>
 			<artifactId>Xpix-${aol}-static-${mode}</artifactId>
-			<version>2.1.5</version>
+			<version>2.1.7-soleil</version>
 		</dependency>
 		<dependency>
 			<groupId>fr.soleil.lib</groupId>
@@ -56,7 +56,7 @@
 						</options>
 						
 						<!-- <systemIncludePaths>
-							<systemIncludePath>/home/informatique/ica/langlois/ImXpad/xpix_2_1_0b/imxpad_lib/xpci_lib</systemIncludePath>
+							<systemIncludePath>/home/informatique/ica/langlois/ImXpad/xpix_2_1_7_soleil/imxpad_lib/xpci_lib</systemIncludePath>
 						</systemIncludePaths> -->
 						
 					</cpp>
@@ -65,7 +65,7 @@
 							<lib>
 								<name>xpci_lib</name>
 								<type>static</type>
-								<directory>/home/informatique/ica/langlois/ImXpad/xpix_2_1_0b/imxpad_lib/xpci_lib</directory>
+								<directory>/home/informatique/ica/langlois/ImXpad/xpix_2_1_7_soleil/imxpad_lib/xpci_lib</directory>
 							</lib>
 						</libs>
 					</linker> -->
