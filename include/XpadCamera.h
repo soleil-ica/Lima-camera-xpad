@@ -76,8 +76,8 @@ const int I2_COLUMN = 578;
 const int S140_CORRECTED_NB_ROW		= 243;
 const int S140_CORRECTED_NB_COLUMN  = 578;
 
-const int S540_CORRECTED_NB_ROW		= 1156;
-const int S540_CORRECTED_NB_COLUMN  = 578;
+const int S540_CORRECTED_NB_ROW		= 1157;  //- hope this will no more change
+const int S540_CORRECTED_NB_COLUMN  = 582; //- hope this will no more change
 
 
 namespace lima
