@@ -341,12 +341,16 @@ void Camera::getPixelDepth(ImageType& pixel_depth)
 	{
 	case 0:
 		pixel_depth = Bpp16;
+                if(m_geom_corr)
+                    pixel_depth = Bpp32; //- Force to 32 as it is float
 		break;
 
 	case 1:
 		pixel_depth = Bpp32;
 		break;	
 	}
+        
+        
 }
 
 //-----------------------------------------------------
@@ -724,7 +728,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				}
 
 				//- the geometric corrected image is returned by the xpix lib
-				if(m_geom_corr) //- only for swing S540 xpad (578 * 1156) 
+				if(m_geom_corr) //- only for swing S540 xpad
 					one_corrected_image = new float [ m_image_size.getWidth() * m_image_size.getHeight() ];
 				
                 //- workaround to a bug in xpci_getNumberLastAcquiredAsyncImage(): have to wait a little before calling it
@@ -812,7 +816,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 									doublePixelCorrection<uint32_t>((uint32_t *)one_image,corrected_image);
 									memcpy((uint32_t *)lima_img_ptr, (uint32_t *)corrected_image,m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint32_t));
 								}
-								else
+								else //- no double pix correction
 								{
 									memcpy((uint32_t *)lima_img_ptr, (uint32_t *)one_image,m_image_size.getWidth() * m_image_size.getHeight() * sizeof(uint32_t));
 								}
@@ -959,7 +963,6 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 					}
 					else
 					{
-
 						Event *my_event = new Event(Hardware, Event::Error, Event::Camera, Event::Default, "imxpad_calibration_OTN() : error for path: " + m_calibration_path);
 						//DEB_EVENT(*my_event) << DEB_VAR1(*my_event);
 						reportEvent(my_event);
