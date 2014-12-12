@@ -710,7 +710,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 				float	*one_corrected_image;
 
                 int		image_counter = 0;
-                int		nb_last_aquired_image = 0;
+                int		nb_last_acquired_image = 0;
 
 				if(m_imxpad_format == 0) //- aka 16 bits
 				{
@@ -738,15 +738,15 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 
                 while (image_counter < m_nb_frames)
                 {
-                    nb_last_aquired_image = xpci_getNumberLastAcquiredAsyncImage();
+                    nb_last_acquired_image = xpci_getNumberLastAcquiredAsyncImage();
 
                     //- FL: hacked from imxpad ... don't know what is it
-                    if(nb_last_aquired_image < 0)
+                    if(nb_last_acquired_image < 0)
                         break;
 
-                    if (image_counter < nb_last_aquired_image)
+                    if (image_counter < nb_last_acquired_image)
                     {               	
-                        DEB_TRACE() << "nb_last_aquired_image = " << nb_last_aquired_image;
+                        DEB_TRACE() << "nb_last_acquired_image = " << nb_last_acquired_image;
                     	DEB_TRACE() << "image_counter         = " << image_counter;
                     
                         if ( xpci_getAsyncImage(    m_pixel_depth, 
@@ -832,7 +832,7 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                     }
                 }   
                 
-                DEB_TRACE() << "End: nb_last_aquired_image = " << nb_last_aquired_image;
+                DEB_TRACE() << "End: nb_last_acquired_image = " << nb_last_acquired_image;
                 DEB_TRACE() << "End: image_counter         = " << image_counter;
 
                 //- Finished
@@ -1418,13 +1418,13 @@ void Camera::setDeadTime(unsigned int dead_time_ms)
 	//- Parameters checking
 	if (m_pixel_depth == B2) //- 16 bits
 	{
-		if (dead_time_ms * 1000 < 2000)
-			throw LIMA_HW_EXC(Error, "deadtime should be at least 2000 usec in 16 bits");
+		if (dead_time_ms < 2)
+			throw LIMA_HW_EXC(Error, "deadtime should be at least 2 msec in 16 bits");
 	}
 	else //- 32 bits
 	{
-		if (dead_time_ms * 1000 < 5000)
-			throw LIMA_HW_EXC(Error, "deadtime should be at least 5000 usec in 32 bits");
+		if (dead_time_ms < 5)
+			throw LIMA_HW_EXC(Error, "deadtime should be at least 5 msec in 32 bits");
 	}
 
 	m_time_between_images_usec  = dead_time_ms * 1000; //- Temps entre chaque image
