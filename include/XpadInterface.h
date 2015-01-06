@@ -22,7 +22,7 @@
 #ifndef XPADINTERFACE_H
 #define XPADINTERFACE_H
 
-#include "HwInterface.h"
+#include "lima/HwInterface.h"
 #include "XpadCamera.h"
 
 using namespace lima;

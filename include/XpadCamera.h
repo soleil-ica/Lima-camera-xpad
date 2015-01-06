@@ -45,9 +45,9 @@ const size_t  XPAD_DLL_CALIBRATE		    =	(yat::FIRST_USER_MSG + 103);
 #include <limits>
 
 //- Lima
-#include "HwMaxImageSizeCallback.h"
-#include "HwBufferMgr.h"
-#include "Event.h"
+#include "lima/HwMaxImageSizeCallback.h"
+#include "lima/HwBufferMgr.h"
+#include "lima/Event.h"
 
 using namespace std;
 
