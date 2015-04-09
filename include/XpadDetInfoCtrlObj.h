@@ -23,8 +23,8 @@
 #define XPADDETINFOCTRLOBJ_H
 
 #include "XpadCamera.h"
-#include "HwDetInfoCtrlObj.h"
-#include "HwMaxImageSizeCallback.h"
+#include "lima/HwDetInfoCtrlObj.h"
+#include "lima/HwMaxImageSizeCallback.h"
 
 namespace lima
 {

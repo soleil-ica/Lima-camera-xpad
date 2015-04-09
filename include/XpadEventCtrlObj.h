@@ -23,7 +23,7 @@
 #define XPADEVENTCTRLOBJ_H
 
 #include "XpadCamera.h"
-#include "HwEventCtrlObj.h"
+#include "lima/HwEventCtrlObj.h"
 
 namespace lima
 {

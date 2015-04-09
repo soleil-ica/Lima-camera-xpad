@@ -23,7 +23,7 @@
 #define XPADSYNCCTRLOBJ_H
 
 #include "XpadCamera.h"
-#include "HwSyncCtrlObj.h"
+#include "lima/HwSyncCtrlObj.h"
 
 namespace lima
 {

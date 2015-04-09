@@ -23,7 +23,7 @@
 #define XPADBUFFERCTRLOBJ_H
 
 #include "XpadCamera.h"
-#include "HwBufferCtrlObj.h"
+#include "lima/HwBufferCtrlObj.h"
 
 namespace lima
 {
