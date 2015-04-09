@@ -51,9 +51,9 @@ const size_t  XPAD_DLL_UPLOAD_CALIBRATION   =	(yat::FIRST_USER_MSG + 109);
 #include <limits>
 
 //- Lima
-#include "HwMaxImageSizeCallback.h"
-#include "HwBufferMgr.h"
-#include "Event.h"
+#include "lima/HwMaxImageSizeCallback.h"
+#include "lima/HwBufferMgr.h"
+#include "lima/Event.h"
 
 //- Tools / Defs / Consts
 #define SET(var, bit) ( var|=  (1 << bit)  )       /* positionne le bit numero 'bit' a 1 dans une variable*/
