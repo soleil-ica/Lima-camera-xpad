@@ -50,7 +50,7 @@ m_maximage_size_cb_active(false)
     m_acquisition_type	= Camera::SYNC;
     m_current_nb_frames = 0;
 
-    m_time_between_images_usec      = 5000;
+    m_time_between_images_usec      = 10;
     m_ovf_refresh_time_usec         = 4000;
     m_time_before_start_usec        = 0;
     m_shutter_time_usec             = 0;
@@ -466,6 +466,34 @@ void Camera::getExpTime(double& exp_time_sec)
 	DEB_RETURN() << DEB_VAR1(exp_time_sec);
 }
 
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+void Camera::setLatTime(double lat_time_sec)
+{
+    DEB_MEMBER_FUNCT();
+    DEB_PARAM() << DEB_VAR1(lat_time_sec);
+
+	//- transform into usec
+	unsigned int lat_time_us = lat_time_sec * 1e6;
+	//- Parameters checking
+	if (lat_time_us < 10)
+		throw LIMA_HW_EXC(Error, "latency time should be at least 10 usec");
+	
+	m_time_between_images_usec = lat_time_us; //- Temps entre chaque image
+}
+
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+void Camera::getLatTime(double& lat_time_sec)
+{
+    DEB_MEMBER_FUNCT();
+
+    lat_time_sec = m_time_between_images_usec / 1e6;
+
+    DEB_RETURN() << DEB_VAR1(lat_time_sec);
+}
 
 //-----------------------------------------------------
 //
@@ -1406,28 +1434,6 @@ void Camera::setCalibrationAdjustingNumber(unsigned calibration_adjusting_number
     DEB_MEMBER_FUNCT();
 
     m_calibration_adjusting_number = calibration_adjusting_number;
-}
-
-//-----------------------------------------------------
-//		Set the deadtime
-//-----------------------------------------------------
-void Camera::setDeadTime(unsigned int dead_time_ms)
-{
-	DEB_MEMBER_FUNCT();
-
-	//- Parameters checking
-	if (m_pixel_depth == B2) //- 16 bits
-	{
-		if (dead_time_ms < 2)
-			throw LIMA_HW_EXC(Error, "deadtime should be at least 2 msec in 16 bits");
-	}
-	else //- 32 bits
-	{
-		if (dead_time_ms < 5)
-			throw LIMA_HW_EXC(Error, "deadtime should be at least 5 msec in 32 bits");
-	}
-
-	m_time_between_images_usec  = dead_time_ms * 1000; //- Temps entre chaque image
 }
 
 //-----------------------------------------------------

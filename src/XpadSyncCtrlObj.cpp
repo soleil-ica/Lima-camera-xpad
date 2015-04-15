@@ -101,6 +101,22 @@ void SyncCtrlObj::getExpTime(double& exp_time)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
+void SyncCtrlObj::setLatTime(double  lat_time)
+{
+  m_cam.setLatTime(lat_time);
+}
+
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
+void SyncCtrlObj::getLatTime(double& lat_time)
+{
+  m_cam.getLatTime(lat_time);
+}
+
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
 void SyncCtrlObj::setNbHwFrames(int nb_frames)
 {
 	m_cam.setNbFrames(nb_frames);

@@ -47,8 +47,8 @@ namespace lima
       virtual void setExpTime(double  exp_time);
       virtual void getExpTime(double& exp_time);
       
-      virtual void setLatTime(double  lat_time){}//- Not supported by Xpad
-      virtual void getLatTime(double& lat_time){lat_time = 0;}//- Not supported by Xpad
+      virtual void setLatTime(double  lat_time);
+      virtual void getLatTime(double& lat_time);
 
       virtual void setNbHwFrames(int  nb_frames);
       virtual void getNbHwFrames(int& nb_frames);

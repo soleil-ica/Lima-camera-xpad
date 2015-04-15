@@ -136,6 +136,8 @@ namespace Xpad
 		void getTrigMode(TrigMode& mode);
 		void setExpTime(double  exp_time);
 		void getExpTime(double& exp_time);
+		void setLatTime(double  lat_time);
+		void getLatTime(double& lat_time);
 		
 		//- Status
 		void getStatus(Camera::Status& status);
@@ -191,8 +193,6 @@ namespace Xpad
         //! Set the Calibration Adjusting number of iteration
         void setCalibrationAdjustingNumber(unsigned calibration_adjusting_number);
 
-		//! Set the deadtime
-		void setDeadTime(unsigned int dead_time_ms);
 		//! Set the init time
 		void setInitTime(unsigned int init_time_ms);
 		//! Set the shutter time
