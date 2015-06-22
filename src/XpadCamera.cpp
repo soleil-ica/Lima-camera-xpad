@@ -50,7 +50,7 @@ m_maximage_size_cb_active(false)
     m_acquisition_type	= Camera::SYNC;
     m_current_nb_frames = 0;
 
-    m_time_between_images_usec      = 10;
+    m_time_between_images_usec      = 1000;
     m_ovf_refresh_time_usec         = 4000;
     m_time_before_start_usec        = 0;
     m_shutter_time_usec             = 0;
@@ -477,8 +477,8 @@ void Camera::setLatTime(double lat_time_sec)
 	//- transform into usec
 	unsigned int lat_time_us = lat_time_sec * 1e6;
 	//- Parameters checking
-	if (lat_time_us < 10)
-		throw LIMA_HW_EXC(Error, "latency time should be at least 10 usec");
+	if (lat_time_us < 1000)
+		throw LIMA_HW_EXC(Error, "latency time should be at least 1000 usec (1 ms)");
 	
 	m_time_between_images_usec = lat_time_us; //- Temps entre chaque image
 }
