@@ -192,6 +192,8 @@ namespace Xpad
         void decrementITHL();
         //! Set the Calibration Adjusting number of iteration
         void setCalibrationAdjustingNumber(unsigned calibration_adjusting_number);
+		//! Set the Minimum latency time in ms
+        void setMinLatencyTimeMs(double min_latency_time_ms);
 
 		//! Set the init time
 		void setInitTime(unsigned int init_time_ms);
@@ -256,6 +258,7 @@ namespace Xpad
         unsigned short 			m_xpad_model;
         std::string             m_calibration_path;
         unsigned int            m_calibration_adjusting_number;
+		double					m_min_latency_time_ms;
         void**                  m_image_array;
 		bool					m_doublepixel_corr;
 		unsigned int			m_calib_texp;

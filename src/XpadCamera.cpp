@@ -48,7 +48,7 @@ m_maximage_size_cb_active(false)
     
     m_status            = Camera::Ready;
     m_acquisition_type	= Camera::SYNC;
-    m_current_nb_frames = 0;
+    m_current_nb_frames = -1;
 
     m_time_between_images_usec      = 1000;
     m_ovf_refresh_time_usec         = 4000;
@@ -61,6 +61,7 @@ m_maximage_size_cb_active(false)
 	m_specific_param_GP2			= 0;
 	m_specific_param_GP3			= 0;
 	m_specific_param_GP4			= 0;
+	m_min_latency_time_ms			= 5;
 	
 	m_doublepixel_corr				= false;
 	m_norm_factor					= 2.5;
@@ -73,7 +74,7 @@ m_maximage_size_cb_active(false)
     else if	(xpad_model == "IMXPAD_S420")	m_xpad_model = IMXPAD_S420;
     else if	(xpad_model == "IMXPAD_S540")	m_xpad_model = IMXPAD_S540;
     else
-        throw LIMA_HW_EXC(Error, "Xpad Model not supported");
+        throw LIMA_HW_EXC(Error, "Xpad model not supported");
 
     //-------------------------------------------------------------
     //- Init the xpix driver
@@ -157,6 +158,7 @@ void Camera::prepare()
     m_stop_asked = false;
     m_image_array = 0;
 	m_nb_live_frames = 0;
+	m_current_nb_frames = -1;
     
     DEB_TRACE() << "m_acquisition_type = " << m_acquisition_type ;
     DEB_TRACE() << "Setting Exposure parameters with values: ";
@@ -477,8 +479,8 @@ void Camera::setLatTime(double lat_time_sec)
 	//- transform into usec
 	unsigned int lat_time_us = lat_time_sec * 1e6;
 	//- Parameters checking
-	if (lat_time_us < 1000)
-		throw LIMA_HW_EXC(Error, "latency time should be at least 1000 usec (1 ms)");
+	if (lat_time_us < m_min_latency_time_ms * 1e3)
+		throw LIMA_HW_EXC(Error, "latency time is under the min authorized value");
 	
 	m_time_between_images_usec = lat_time_us; //- Temps entre chaque image
 }
@@ -524,7 +526,9 @@ void Camera::getNbFrames(int& nb_frames)
 //---------------------------------------------------------------------------------------
 int Camera::getNbHwAcquiredFrames()
 {
-	return m_current_nb_frames + 1; //- because m_current_nb_frames start at 0 
+	//return m_current_nb_frames /*+ 1*/; //- because m_current_nb_frames start at 0 
+
+	return(m_current_nb_frames == -1) ? 0 : (m_current_nb_frames + 1);
 }
 
 //-----------------------------------------------------
@@ -1434,6 +1438,16 @@ void Camera::setCalibrationAdjustingNumber(unsigned calibration_adjusting_number
     DEB_MEMBER_FUNCT();
 
     m_calibration_adjusting_number = calibration_adjusting_number;
+}
+
+//-----------------------------------------------------
+//		set Min LatencyTime Ms
+//-----------------------------------------------------
+void Camera::setMinLatencyTimeMs(double min_latency_time_ms)
+{
+    DEB_MEMBER_FUNCT();
+
+    m_min_latency_time_ms = min_latency_time_ms;
 }
 
 //-----------------------------------------------------

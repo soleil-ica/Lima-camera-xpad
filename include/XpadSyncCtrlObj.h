@@ -25,6 +25,9 @@
 #include "XpadCamera.h"
 #include "lima/HwSyncCtrlObj.h"
 
+const double  MIN_TIME_NOT_DEFINED = 10e-9;
+const double  MAX_TIME_NOT_DEFINED = 10e9;
+
 namespace lima
 {
   namespace Xpad
