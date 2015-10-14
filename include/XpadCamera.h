@@ -79,6 +79,14 @@ const int S140_CORRECTED_NB_COLUMN  = 578;
 const int S540_CORRECTED_NB_ROW		= 1157;  //- hope this will no more change
 const int S540_CORRECTED_NB_COLUMN  = 582; //- hope this will no more change
 
+const int I1_ROW_S70    = 120;
+const int I1_COLUMN_S70 = 560;
+
+const int I2_ROW_S70    = 120;
+const int I2_COLUMN_S70 = 578;
+
+const int S70_CORRECTED_NB_ROW		= 120;
+const int S70_CORRECTED_NB_COLUMN   = 578;
 
 namespace lima
 {
@@ -282,7 +290,9 @@ namespace Xpad
 
 		//- Internal algos
 		template<typename T> 
-		void doublePixelCorrection(T* image_to_correct,  T corrected_image[][S140_CORRECTED_NB_COLUMN]);
+		void doublePixelCorrectionForS140(T* image_to_correct,  T corrected_image[][S140_CORRECTED_NB_COLUMN]);
+		template<typename T> 
+		void doublePixelCorrectionForS70(T* image_to_correct,  T corrected_image[][S70_CORRECTED_NB_COLUMN]);        
 
 	};
 
