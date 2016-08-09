@@ -25,9 +25,10 @@ provide some important information about the developer's choices.
 Camera initialisation
 ......................
 
-- The camera will be initialized within the XpadCamera object. One should pass to the XpadCamera constructor, the Xpad type as a string.
-Possible values are:
+- The camera will be initialized within the XpadCamera object. One should pass to the XpadCamera constructor, the Xpad type as a string.  Possible values are:
+
 "IMXPAD_S70","IMXPAD_S140","IMXPAD_S340","IMXPAD_S540"
+
 - One also should choose between Synchrone or Asynchrone acquisition through the function: setAcquisitionType()
 
 
