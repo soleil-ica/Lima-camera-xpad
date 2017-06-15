@@ -32,9 +32,9 @@ using namespace lima::Xpad;
 //- Ctor
 //---------------------------
 Camera::Camera(std::string xpad_model) :
-m_buffer_cb_mgr(m_buffer_alloc_mgr),
-m_buffer_ctrl_mgr(m_buffer_cb_mgr),
-m_maximage_size_cb_active(false)
+                    m_buffer_cb_mgr(m_buffer_alloc_mgr),
+                    m_buffer_ctrl_mgr(m_buffer_cb_mgr),
+                    m_maximage_size_cb_active(false)
 {
     DEB_CONSTRUCTOR();
 
@@ -685,9 +685,9 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                     //- copy image in the lima buffer
                     if(m_imxpad_format == 0) //- aka 16 bits
                     {
-                        if(m_doublepixel_corr) //- For S140 only
+                        if(m_doublepixel_corr) //- Double pixel correction for S140 and S70 only
                         {
-                            //TANGODEVIC-1280, add double pixel correction for S70
+                            //-
                             if(m_xpad_model == IMXPAD_S140)
                             {
                                 uint16_t corrected_image[S140_CORRECTED_NB_ROW][S140_CORRECTED_NB_COLUMN];
@@ -708,9 +708,9 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                     }
                     else //- aka 32 bits
                     {
-                        if(m_doublepixel_corr)
+                        if(m_doublepixel_corr) //- Double pixel correction for S140 and S70 only
                         {
-                            //TANGODEVIC-1280, add double pixel correction for S70
+                            //-
                             if(m_xpad_model == IMXPAD_S140)
                             {
                                 uint32_t corrected_image[S140_CORRECTED_NB_ROW][S140_CORRECTED_NB_COLUMN];
@@ -808,9 +808,9 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
 
                 if(m_imxpad_format == 0) //- aka 16 bits
                 {
-                    if(m_doublepixel_corr) //- the image returned by xpix is not double pixel corrected !!
+                    if(m_doublepixel_corr) //- Double pixel correction for S140 and S70 only
                     {
-                        //TANGODEVIC-1280, add double pixel correction for S70
+                        //-
                         if(m_xpad_model == IMXPAD_S140)
 						  one_image = new uint16_t [ (m_image_size.getWidth()-18) * (m_image_size.getHeight()-3) ]; //- TODO const int the 18 and the 3 magics
                         if(m_xpad_model == IMXPAD_S70)
@@ -823,9 +823,9 @@ void Camera::handle_message( yat::Message& msg )  throw( yat::Exception )
                 }
                 else //- aka 32 bits
                 {
-                    if(m_doublepixel_corr) //- the image returned by xpix is not double pixel corrected !!
+                    if(m_doublepixel_corr) //- Double pixel correction for S140 and S70 only
                     {
-                        //TANGODEVIC-1280, add double pixel correction for S70
+                        //-
                         if(m_xpad_model == IMXPAD_S140)
     						one_image = new uint32_t [ (m_image_size.getWidth()-18) * (m_image_size.getHeight()-3) ]; //- TODO const int the 18 and the 3 magics
                         if(m_xpad_model == IMXPAD_S70)
