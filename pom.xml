@@ -10,7 +10,7 @@
 
     <groupId>fr.soleil.lib.Lima.Camera</groupId>
     <artifactId>LimaXpad-${aol}-shared-${mode}</artifactId>
-    <version>1.4.10</version>
+    <version>1.4.11</version>
 	
     <packaging>nar</packaging>
     <name>LimaXpad</name>
@@ -26,7 +26,7 @@
         <dependency>
             <groupId>fr.soleil.lib</groupId>
             <artifactId>LimaCore-${aol}-shared-${mode}</artifactId>
-            <version>1.7.2-SNAPSHOT</version></dependency>
+            <version>1.7.2</version></dependency>
         
         <dependency>
             <groupId>fr.in2p3</groupId>
