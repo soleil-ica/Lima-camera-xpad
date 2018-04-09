@@ -5,68 +5,78 @@ Xpad
 
 .. image:: xpad.jpg
 
-Intoduction
-```````````
+Introduction
+````````````
+
 The XPAD detector is based on the photon counting technology providing a quasi noiseless imaging as well as a very high dynamic range and a fast frame rate (500 images/s).
 This is a detector stemming from the collaboration of Soleil, CPPM and ESRF(D2AM). It is now supported by the ImXPAD company.
-This plugin support the folling models: S70,S140,S340,S540
 
-The XPAD run under Linux, with the help of a PCI express board from PLDA.
+This plugin support the following models:
+
+ - S70,
+ - S140,
+ - S340,
+ - S540
+
+The XPAD runs under Linux, with the help of a PCI express board from PLDA.
 
 Prerequisite
 ````````````
+
 The host where the PCI express board is installed, should have the PLDA driver installed.
 
 Initialisation and Capabilities
 ````````````````````````````````
-In order to help people to understand how the camera plugin has been implemented in LImA this section
-provide some important information about the developer's choices.
+
+Implementing a new plugin for new detector is driven by the LIMA framework but the developer has some freedoms to choose which standard and specific features will be made available. This section is supposed to give you the correct information regarding how the camera is exported within the LIMA framework.
 
 Camera initialisation
 ......................
 
-- The camera will be initialized within the XpadCamera object. One should pass to the XpadCamera constructor, the Xpad type as a string.  Possible values are:
+The camera will be initialized within the :cpp:class:`Xpad::Camera` object. One should pass to the constructor, the Xpad type as a string. Possible values are:
 
-"IMXPAD_S70","IMXPAD_S140","IMXPAD_S340","IMXPAD_S540"
+  - "IMXPAD_S70",
+  - "IMXPAD_S140",
+  - "IMXPAD_S340",
+  - "IMXPAD_S540"
 
-- One also should choose between Synchrone or Asynchrone acquisition through the function: setAcquisitionType()
+Synchrone or Asynchrone acquisition should be selected with a call :cpp:func:`setAcquisitionType()`.
 
-
-Std capabilites
+Std capabilities
 ................
 
-This plugin has been implemented in respect of the mandatory capabilites but with some limitations according 
-to some programmer's  choices.  We only provide here extra information for a better understanding
-of the capabilities for the xpad camera.
+This plugin has been implemented in respect of the mandatory capabilites but with some limitations according to some programmer's  choices. We only provide here extra information for a better understanding of the capabilities for the xpad camera.
 
-* HwDetInfo
-  
+HwDetInfo
+~~~~~~~~~
+
  - 16 or 32 bit unsigned type are supported
  - the size of the image will depend of the type of Xpad
 
-* HwSync
+HwSync
+~~~~~~
 
-  trigger type supported are:
+Trigger type supported are:
+
 	- IntTrig
 	- ExtTrigSingle
 	- ExtGate : 1 external trigger start N internal gates (gates being configured by software)
 	- ExtTrigMult : N external trigger start N internal gates (gates being configured by software)
-  
-  
-Optional capabilites
-........................
 
-There are no optionnal capabilities
+Optional capabilities
+.....................
 
+There are no optional capabilities.
 
 Configuration
 `````````````
 
-No Specific hardware configuration are needed
+No Specific hardware configuration is needed.
 
 How to use
 ````````````
-here is the list of accessible fonctions to configure and use the Xpad detector:
+
+Here is a list of accessible fonctions to configure and use the Xpad detector:
 
 .. code-block:: cpp
 
@@ -76,7 +86,7 @@ here is the list of accessible fonctions to configure and use the Xpad detector:
 	void setAcquisitionType(short acq_type);
 	//!	Load of flat config of value: flat_value (on each pixel)
 	void loadFlatConfig(unsigned flat_value);
-	//! Load all the config G 
+	//! Load all the config G
 	void loadAllConfigG(unsigned long modNum, unsigned long chipId , unsigned long* config_values);
 	//! Load a wanted config G with a wanted value
 	void loadConfigG(const std::vector<unsigned long>& reg_and_value);
@@ -121,6 +131,3 @@ here is the list of accessible fonctions to configure and use the Xpad detector:
 
 	//! Set the Calibration Adjusting number of iteration
 	void setCalibrationAdjustingNumber(unsigned calibration_adjusting_number);
-  
-
-  
