@@ -34,11 +34,6 @@
             <artifactId>Xpix-${aol}-static-${mode}</artifactId>
             <version>2.1.7-soleil</version>
         </dependency>
-        
-        <!-- <dependency>
-            <groupId>ncsa.uiuc.edu</groupId>
-            <artifactId>HDF5-${aol}-shared-release</artifactId>
-        </dependency> -->
     </dependencies>
 
     <build>
@@ -56,21 +51,7 @@
                         <options>
                             <option>-w</option>
                         </options>
-						
-                        <!-- <systemIncludePaths>
-                            <systemIncludePath>/home/informatique/ica/langlois/ImXpad/xpix_2_1_7_soleil/imxpad_lib/xpci_lib</systemIncludePath>
-                        </systemIncludePaths> -->
-						
                     </cpp>
-                    <!-- <linker>
-                        <libs>
-                            <lib>
-                                <name>xpci_lib</name>
-                                <type>static</type>
-                                <directory>/home/informatique/ica/langlois/ImXpad/xpix_2_1_7_soleil/imxpad_lib/xpci_lib</directory>
-                            </lib>
-                        </libs>
-                    </linker> -->
                     <libraries>
                         <library>
                             <type>shared</type>
